@@ -20,4 +20,7 @@
 #define JKIO_H
 
 
+struct MYSTREAM;
+
+
 #endif /* JKIO_H */
