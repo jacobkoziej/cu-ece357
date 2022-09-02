@@ -20,4 +20,15 @@
 #define JKIO_PRIVATE_H
 
 
+#include <stddef.h>
+
+
+struct MYSTREAM {
+	int     fd;
+	char   *buf;
+	char   *pos;
+	size_t  bufsiz;
+};
+
+
 #endif /* JKIO_PRIVATE_H */
