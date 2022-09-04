@@ -18,3 +18,44 @@
 
 #include "jkio.h"
 #include "jkio_private.h"
+
+#include <errno.h>
+#include <fcntl.h>
+#include <stddef.h>
+#include <stdlib.h>
+
+
+struct MYSTREAM *myfopen(const char *pathname, int mode, int bufsiz)
+{
+	if ((mode != O_RDONLY && mode != O_WRONLY) || bufsiz < 0) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	int flags;
+
+	int fd = (mode == O_RDONLY)
+		? open(pathname, flags = O_RDONLY)
+		: open(pathname, flags = O_WRONLY | O_CREAT | O_TRUNC, 0777);
+	if (fd < 0) return NULL;
+
+	struct MYSTREAM *s = malloc(sizeof(struct MYSTREAM));
+	if (!s) return NULL;
+
+	if (bufsiz) {
+		s->buf = malloc(bufsiz);
+		if (!s->buf) goto error;
+		s->pos    = s->buf;
+		s->bufsiz = bufsiz;
+	}
+
+	s->fd    = fd;
+	s->flags = flags;
+
+	return s;
+
+error:
+	free(s);
+
+	return NULL;
+}
