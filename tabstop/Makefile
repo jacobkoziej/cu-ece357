@@ -35,6 +35,5 @@ $(BIN): $(OBJ)
 
 
 $(DEPEND): $(SRC)
-	@rm -f $@
 	$(CC) $(CFLAGS) -MM $^ -MF $@
 include $(DEPEND)
