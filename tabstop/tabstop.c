@@ -18,8 +18,22 @@
 
 #include "jkio.h"
 
+#include <stdlib.h>
+
+
+static struct MYSTREAM *rfp;
+static struct MYSTREAM *wfp;
+
+
+static void cleanup(void)
+{
+	if (rfp) myfclose(rfp);
+	if (wfp) myfclose(wfp);
+}
 
 int main(void)
 {
+	atexit(cleanup);
+
 	return 0;
 }
