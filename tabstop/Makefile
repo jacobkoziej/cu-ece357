@@ -27,7 +27,7 @@ all: $(BIN)
 
 .PHONY: clean
 clean:
-	@rm -rvf $(BIN) *.o .depend
+	@rm -rvf $(BIN) $(DEPEND) *.o
 
 
 $(BIN): $(OBJ)
