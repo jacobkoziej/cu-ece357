@@ -23,4 +23,7 @@
 struct MYSTREAM;
 
 
+struct MYSTREAM *myfopen(const char *pathname, int mode, int bufsiz);
+
+
 #endif /* JKIO_H */
