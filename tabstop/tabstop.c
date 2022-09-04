@@ -55,8 +55,20 @@ int main(int argc, char **argv)
 	const char *wpath  = NULL;
 	size_t      bufsiz = TABSTOP_BUFSIZ;
 
-	while ((opt = getopt(argc, argv, "o:")) != -1) {
+	while ((opt = getopt(argc, argv, "b:o:")) != -1) {
 		switch (opt) {
+			case 'b':;
+				// get largest power of 2 up to 64Ki
+				long tmp = labs(atol(optarg));
+				if (tmp > (1 << 16)) tmp = 1 << 16;
+
+				for (int i = 16; i >= 0; i--)
+					if (tmp & (1 << i)) {
+						bufsiz = 1 << i;
+						break;
+					}
+				break;
+
 			case 'o':
 				wpath = optarg;
 				break;
