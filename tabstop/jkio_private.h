@@ -24,12 +24,12 @@
 
 
 struct MYSTREAM {
-	int     fd;
-	int     flags;
-	char   *buf;
-	char   *pos;
-	size_t  bufsiz;
-	size_t  bufuse;
+	int            fd;
+	int            flags;
+	unsigned char *buf;
+	unsigned char *pos;
+	size_t         bufsiz;
+	size_t         bufuse;
 };
 
 
