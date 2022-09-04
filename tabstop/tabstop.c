@@ -18,7 +18,13 @@
 
 #include "jkio.h"
 
+#include <fcntl.h>
+#include <stddef.h>
 #include <stdlib.h>
+#include <unistd.h>
+
+
+#define TABSTOP_BUFSIZ 4096
 
 
 static struct MYSTREAM *rfp;
@@ -31,9 +37,26 @@ static void cleanup(void)
 	if (wfp) myfclose(wfp);
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
 	atexit(cleanup);
+
+	static int         opt;
+	static const char *opath;
+	static size_t      bufsiz = TABSTOP_BUFSIZ;
+
+	while ((opt = getopt(argc, argv, "o:")) != -1) {
+		switch (opt) {
+			case 'o':
+				opath = optarg;
+				break;
+		}
+	}
+
+	wfp = (opath)
+		? myfopen(opath, O_WRONLY, bufsiz)
+		: myfdopen(STDOUT_FILENO, O_WRONLY, bufsiz);
+	if (!wfp) return 255;
 
 	return 0;
 }
