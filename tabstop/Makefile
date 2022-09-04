@@ -19,7 +19,7 @@ SRC := $(wildcard *.c)
 OBJ := $(SRC:.c=.o)
 DEP := $(SRC:.c=.d)
 
-CFLAGS += -Wall -Wextra -Wpedantic -g
+CFLAGS += -Wall -Wextra -Wpedantic -g -std=c17
 
 
 .PHONY: all
