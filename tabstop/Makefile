@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-BIN    := tabstop
-SRC    := $(wildcard *.c)
-OBJ    := $(SRC:.c=.o)
-DEPEND := $(SRC:.c=.d)
+BIN := tabstop
+SRC := $(wildcard *.c)
+OBJ := $(SRC:.c=.o)
+DEP := $(SRC:.c=.d)
 
 CFLAGS += -Wall -Wextra -Wpedantic -g
 
@@ -25,12 +25,12 @@ CFLAGS += -Wall -Wextra -Wpedantic -g
 all: $(BIN)
 
 
--include $(DEPEND)
+-include $(DEP)
 
 
 .PHONY: clean
 clean:
-	@rm -rvf $(BIN) $(DEPEND) *.o
+	@rm -rvf $(BIN) $(DEP) *.o
 
 
 $(BIN): $(OBJ)
