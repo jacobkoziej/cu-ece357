@@ -24,6 +24,7 @@ struct MYSTREAM;
 
 
 struct MYSTREAM *myfdopen(int filedesc, int mode, int bufsiz);
+int              myfgetc(struct MYSTREAM *stream);
 struct MYSTREAM *myfopen(const char *pathname, int mode, int bufsiz);
 
 
