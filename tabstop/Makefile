@@ -16,8 +16,8 @@
 
 BIN    := tabstop
 SRC    := $(wildcard *.c)
-OBJ    := $(patsubst %.c,%.o,$(SRC))
-DEPEND := $(patsubst %.c,%.d,$(SRC))
+OBJ    := $(SRC:.c=.o)
+DEPEND := $(SRC:.c=.d)
 
 CFLAGS += -Wall -Wextra -Wpedantic -g
 
