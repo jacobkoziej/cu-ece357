@@ -22,6 +22,7 @@ DEP := $(SRC:.c=.d)
 CFLAGS += -Wall -Wextra -Wpedantic -g
 
 
+.PHONY: all
 all: $(BIN)
 
 
