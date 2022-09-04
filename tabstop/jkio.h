@@ -28,6 +28,7 @@ struct MYSTREAM *myfdopen(int filedesc, int mode, int bufsiz);
 int              myfflush(struct MYSTREAM *stream);
 int              myfgetc(struct MYSTREAM *stream);
 struct MYSTREAM *myfopen(const char *pathname, int mode, int bufsiz);
+int              myfputc(int c, struct MYSTREAM *stream);
 
 
 #endif /* JKIO_H */
