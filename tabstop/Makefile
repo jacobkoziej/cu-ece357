@@ -17,12 +17,15 @@
 BIN    := tabstop
 SRC    := $(wildcard *.c)
 OBJ    := $(patsubst %.c,%.o,$(SRC))
-DEPEND := .depend
+DEPEND := $(patsubst %.c,%.d,$(SRC))
 
 CFLAGS += -Wall -Werror -Wpedantic -g
 
 
 all: $(BIN)
+
+
+-include $(DEPEND)
 
 
 .PHONY: clean
@@ -34,6 +37,6 @@ $(BIN): $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^
 
 
-$(DEPEND): $(SRC)
-	$(CC) $(CFLAGS) -MM $^ -MF $@
-include $(DEPEND)
+$(OBJ): %.o: %.c
+	$(CC) $(CFLAGS) -c $<
+	$(CC) $(CFLAGS) -MM $< -MF $*.d
