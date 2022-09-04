@@ -23,7 +23,6 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 
@@ -37,11 +36,13 @@ static struct MYSTREAM *wfp;
 static void cleanup(void)
 {
 	if (rfp) {
-		myfclose(rfp);
+		if (myfclose(rfp) < 0)
+			perror("failed to close reading stream");
 		rfp = NULL;
 	}
 	if (wfp) {
-		myfclose(wfp);
+		if (myfclose(wfp) < 0)
+			perror("failed to close writing stream");
 		wfp = NULL;
 	}
 }
@@ -83,13 +84,7 @@ int main(int argc, char **argv)
 		? myfopen(rpath, O_RDONLY, bufsiz)
 		: myfdopen(STDIN_FILENO, O_RDONLY, bufsiz);
 	if (!rfp) {
-		fprintf(
-			stderr,
-			"%s: couldn't open file for reading: %s -- '%s'\n",
-			argv[0],
-			strerror(errno),
-			(rpath) ? rpath : "stdin"
-		);
+		perror("couldn't open file for reading");
 		return 255;
 	}
 
@@ -97,13 +92,7 @@ int main(int argc, char **argv)
 		? myfopen(wpath, O_WRONLY, bufsiz)
 		: myfdopen(STDOUT_FILENO, O_WRONLY, bufsiz);
 	if (!wfp) {
-		fprintf(
-			stderr,
-			"%s: couldn't open file for writing: %s -- '%s'\n",
-			argv[0],
-			strerror(errno),
-			(wpath) ? wpath : "stdout"
-		);
+		perror("couldn't open file for writing");
 		return 255;
 	}
 
@@ -111,13 +100,7 @@ int main(int argc, char **argv)
 	int val;
 	while ((val = myfgetc(rfp)) != -1) {
 		if (errno) {
-			fprintf(
-				stderr,
-				"%s: failed get character: %s -- '%s'\n",
-				argv[0],
-				strerror(errno),
-				(rpath) ? rpath : "stdin"
-			);
+			perror("failed to get character from stream");
 			return 255;
 		}
 
@@ -132,14 +115,7 @@ int main(int argc, char **argv)
 
 		for (int i = 0; i < lim; i++)
 			if (myfputc(val, wfp) < 0) {
-				fprintf(
-					stderr,
-					"%s: failed put character '%c': %s -- '%s'\n",
-					argv[0],
-					val,
-					strerror(errno),
-					(wpath) ? wpath : "stdout"
-				);
+				perror("failed to put character to stream");
 				return 255;
 			}
 	}
