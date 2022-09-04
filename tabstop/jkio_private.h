@@ -21,6 +21,7 @@
 
 
 #include <stddef.h>
+#include <sys/stat.h>
 
 
 struct MYSTREAM {
@@ -28,6 +29,7 @@ struct MYSTREAM {
 	char   *buf;
 	char   *pos;
 	size_t  bufsiz;
+	mode_t  mode;
 };
 
 
