@@ -50,6 +50,9 @@ int main(int argc, char **argv)
 			case 'o':
 				opath = optarg;
 				break;
+
+			default:
+				return 255;
 		}
 	}
 
