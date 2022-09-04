@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 	size_t      bufsiz = TABSTOP_BUFSIZ;
 
 	opterr = 0;
-	while ((opt = getopt(argc, argv, ":b:o:")) != -1) {
+	while ((opt = getopt(argc, argv, ":b:ho:")) != -1) {
 		switch (opt) {
 			case 'b':;
 				// get largest power of 2 up to 64Ki
@@ -71,6 +71,13 @@ int main(int argc, char **argv)
 					}
 				break;
 
+			case 'h':
+				printf(
+					"usage: %s [-b bufsiz] [-o output] [FILE]\n",
+					argv[0]
+				);
+				return 0;
+
 			case 'o':
 				wpath = optarg;
 				break;
@@ -81,6 +88,11 @@ int main(int argc, char **argv)
 					"unknown flag: '%c'\n",
 					optopt
 				);
+				fprintf(
+					stderr,
+					"try '%s -h' for usage information\n",
+					argv[0]
+				);
 				return 255;
 
 			case ':':
@@ -88,6 +100,11 @@ int main(int argc, char **argv)
 					stderr,
 					"missing argument: '%c'\n",
 					optopt
+				);
+				fprintf(
+					stderr,
+					"try '%s -h' for usage information\n",
+					argv[0]
 				);
 				return 255;
 
