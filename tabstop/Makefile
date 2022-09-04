@@ -19,7 +19,7 @@ SRC    := $(wildcard *.c)
 OBJ    := $(patsubst %.c,%.o,$(SRC))
 DEPEND := $(patsubst %.c,%.d,$(SRC))
 
-CFLAGS += -Wall -Werror -Wpedantic -g
+CFLAGS += -Wall -Wextra -Wpedantic -g
 
 
 all: $(BIN)
