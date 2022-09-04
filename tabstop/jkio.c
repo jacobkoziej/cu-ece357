@@ -28,12 +28,16 @@
 
 int myfclose(struct MYSTREAM *stream)
 {
-	if ((stream->flags & O_WRONLY) && myfflush(stream) < 0) return -1;
+	int ret = 0;
+
+	if ((stream->flags & O_WRONLY) && myfflush(stream) < 0) ret = -1;
+
+	if (close(stream->fd) < 0) ret = -1;
 
 	if (stream->buf) free(stream->buf);
 	free(stream);
 
-	return 0;
+	return ret;
 }
 
 struct MYSTREAM *myfdopen(int filedesc, int mode, int bufsiz)
