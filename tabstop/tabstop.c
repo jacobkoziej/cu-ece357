@@ -60,7 +60,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (argc - optind) rpath = argv[optind];
+	if (argc - optind) rpath = argv[argc - 1];
 	rfp = (rpath)
 		? myfopen(rpath, O_RDONLY, bufsiz)
 		: myfdopen(STDIN_FILENO, O_RDONLY, bufsiz);
