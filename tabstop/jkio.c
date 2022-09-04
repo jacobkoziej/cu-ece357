@@ -23,6 +23,7 @@
 #include <fcntl.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 
 struct MYSTREAM *myfdopen(int filedesc, int mode, int bufsiz)
@@ -51,6 +52,34 @@ error:
 	free(s);
 
 	return NULL;
+}
+
+int myfgetc(struct MYSTREAM *stream)
+{
+	ssize_t ret;
+
+	// unbuffered
+	if (!stream->bufsiz) {
+		unsigned char val;
+
+		ret = read(stream->fd, &val, 1);
+
+		if (!ret) errno = 0;
+		return (ret <= 0) ? -1 : val;
+	}
+
+	if (!stream->bufuse) {
+		ret = read(stream->fd, stream->buf, stream->bufsiz);
+
+		if (!ret) errno = 0;
+		if (ret <= 0) return -1;
+
+		stream->pos    = stream->buf;
+		stream->bufuse = ret;
+	}
+
+	--stream->bufuse;
+	return *stream->pos++;
 }
 
 struct MYSTREAM *myfopen(const char *pathname, int mode, int bufsiz)
