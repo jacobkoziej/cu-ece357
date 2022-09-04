@@ -26,6 +26,16 @@
 #include <unistd.h>
 
 
+int myfclose(struct MYSTREAM *stream)
+{
+	if ((stream->flags & O_WRONLY) && myfflush(stream) < 0) return -1;
+
+	if (stream->buf) free(stream->buf);
+	free(stream);
+
+	return 0;
+}
+
 struct MYSTREAM *myfdopen(int filedesc, int mode, int bufsiz)
 {
 	if (filedesc < 0 || (mode != O_RDONLY && mode != O_WRONLY) || bufsiz < 0) {
