@@ -146,3 +146,16 @@ error:
 
 	return NULL;
 }
+
+int myfputc(int c, struct MYSTREAM *stream)
+{
+	unsigned char out = c;
+
+	// unbuffered
+	if (!stream->bufsiz) return (write(stream->fd, &out, 1) <= 0) ? -1 : c;
+
+	*stream->pos++ = out;
+	return ((++stream->bufuse >= stream->bufsiz) && (myfflush(stream) < 0))
+		? -1
+		: c;
+}
