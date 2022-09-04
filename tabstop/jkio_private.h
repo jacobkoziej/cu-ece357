@@ -29,6 +29,7 @@ struct MYSTREAM {
 	char   *buf;
 	char   *pos;
 	size_t  bufsiz;
+	size_t  bufuse;
 };
 
 
