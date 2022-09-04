@@ -82,10 +82,10 @@ int main(int argc, char **argv)
 				wpath = optarg;
 				break;
 
-			case '?':
+			case ':':
 				fprintf(
 					stderr,
-					"unknown flag: '%c'\n",
+					"missing argument: '%c'\n",
 					optopt
 				);
 				fprintf(
@@ -95,10 +95,10 @@ int main(int argc, char **argv)
 				);
 				return 255;
 
-			case ':':
+			case '?':
 				fprintf(
 					stderr,
-					"missing argument: '%c'\n",
+					"unknown flag: '%c'\n",
 					optopt
 				);
 				fprintf(
