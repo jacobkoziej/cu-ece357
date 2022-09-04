@@ -107,5 +107,42 @@ int main(int argc, char **argv)
 		return 255;
 	}
 
+	errno = 0;
+	int val;
+	while ((val = myfgetc(rfp)) != -1) {
+		if (errno) {
+			fprintf(
+				stderr,
+				"%s: failed get character: %s -- '%s'\n",
+				argv[0],
+				strerror(errno),
+				(rpath) ? rpath : "stdin"
+			);
+			return 255;
+		}
+
+		// check if we need to make a 4-space tabstop
+		int lim;
+		if (val == '\t') {
+			lim = 4;
+			val = ' ';
+		} else {
+			lim = 1;
+		}
+
+		for (int i = 0; i < lim; i++)
+			if (myfputc(val, wfp) < 0) {
+				fprintf(
+					stderr,
+					"%s: failed put character '%c': %s -- '%s'\n",
+					argv[0],
+					val,
+					strerror(errno),
+					(wpath) ? wpath : "stdout"
+				);
+				return 255;
+			}
+	}
+
 	return 0;
 }
