@@ -45,6 +45,7 @@ int main(int argc, char **argv)
 	atexit(cleanup);
 
 	int         opt;
+	const char *rpath  = NULL;
 	const char *wpath  = NULL;
 	size_t      bufsiz = TABSTOP_BUFSIZ;
 
@@ -57,6 +58,21 @@ int main(int argc, char **argv)
 			default:
 				return 255;
 		}
+	}
+
+	if (argc - optind) rpath = argv[optind];
+	rfp = (rpath)
+		? myfopen(rpath, O_RDONLY, bufsiz)
+		: myfdopen(STDIN_FILENO, O_RDONLY, bufsiz);
+	if (!rfp) {
+		fprintf(
+			stderr,
+			"%s: couldn't open file for reading: %s -- '%s'\n",
+			argv[0],
+			strerror(errno),
+			(rpath) ? rpath : "stdin"
+		);
+		return 255;
 	}
 
 	wfp = (wpath)
