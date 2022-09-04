@@ -18,9 +18,12 @@
 
 #include "jkio.h"
 
+#include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 
@@ -59,7 +62,16 @@ int main(int argc, char **argv)
 	wfp = (opath)
 		? myfopen(opath, O_WRONLY, bufsiz)
 		: myfdopen(STDOUT_FILENO, O_WRONLY, bufsiz);
-	if (!wfp) return 255;
+	if (!wfp) {
+		fprintf(
+			stderr,
+			"%s: couldn't open file for writing: %s -- '%s'\n",
+			argv[0],
+			strerror(errno),
+			(opath) ? opath : "stdout"
+		);
+		return 255;
+	}
 
 	return 0;
 }
