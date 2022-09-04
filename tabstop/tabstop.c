@@ -45,13 +45,13 @@ int main(int argc, char **argv)
 	atexit(cleanup);
 
 	int         opt;
-	const char *opath  = NULL;
+	const char *wpath  = NULL;
 	size_t      bufsiz = TABSTOP_BUFSIZ;
 
 	while ((opt = getopt(argc, argv, "o:")) != -1) {
 		switch (opt) {
 			case 'o':
-				opath = optarg;
+				wpath = optarg;
 				break;
 
 			default:
@@ -59,8 +59,8 @@ int main(int argc, char **argv)
 		}
 	}
 
-	wfp = (opath)
-		? myfopen(opath, O_WRONLY, bufsiz)
+	wfp = (wpath)
+		? myfopen(wpath, O_WRONLY, bufsiz)
 		: myfdopen(STDOUT_FILENO, O_WRONLY, bufsiz);
 	if (!wfp) {
 		fprintf(
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 			"%s: couldn't open file for writing: %s -- '%s'\n",
 			argv[0],
 			strerror(errno),
-			(opath) ? opath : "stdout"
+			(wpath) ? wpath : "stdout"
 		);
 		return 255;
 	}
