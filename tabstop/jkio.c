@@ -79,6 +79,8 @@ int myfflush(struct MYSTREAM *stream)
 		stream->bufuse -= ret;
 	} while (ret > 0);
 
+	stream->pos = stream->buf;
+
 	return 0;
 }
 
