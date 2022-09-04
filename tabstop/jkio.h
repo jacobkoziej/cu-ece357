@@ -23,6 +23,7 @@
 struct MYSTREAM;
 
 
+int              myfclose(struct MYSTREAM *stream);
 struct MYSTREAM *myfdopen(int filedesc, int mode, int bufsiz);
 int              myfflush(struct MYSTREAM *stream);
 int              myfgetc(struct MYSTREAM *stream);
