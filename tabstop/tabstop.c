@@ -37,12 +37,12 @@ static void cleanup(void)
 {
 	if (rfp) {
 		if (myfclose(rfp) < 0)
-			perror("failed to close reading stream");
+			perror("couldn't close reading stream");
 		rfp = NULL;
 	}
 	if (wfp) {
 		if (myfclose(wfp) < 0)
-			perror("failed to close writing stream");
+			perror("couldn't close writing stream");
 		wfp = NULL;
 	}
 }
@@ -134,7 +134,7 @@ int main(int argc, char **argv)
 	int val;
 	while ((val = myfgetc(rfp)) != -1) {
 		if (errno) {
-			perror("failed to get character from stream");
+			perror("couldn't get character from stream");
 			return 255;
 		}
 
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
 
 		for (int i = 0; i < lim; i++)
 			if (myfputc(val, wfp) < 0) {
-				perror("failed to put character to stream");
+				perror("couldn't put character to stream");
 				return 255;
 			}
 	}
