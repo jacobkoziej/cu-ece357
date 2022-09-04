@@ -36,8 +36,14 @@ static struct MYSTREAM *wfp;
 
 static void cleanup(void)
 {
-	if (rfp) myfclose(rfp);
-	if (wfp) myfclose(wfp);
+	if (rfp) {
+		myfclose(rfp);
+		rfp = NULL;
+	}
+	if (wfp) {
+		myfclose(wfp);
+		wfp = NULL;
+	}
 }
 
 int main(int argc, char **argv)
