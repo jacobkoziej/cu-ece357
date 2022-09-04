@@ -37,6 +37,6 @@ $(BIN): $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^
 
 
-$(OBJ): %.o: %.c
+%.o: %.c
 	$(CC) $(CFLAGS) -c $<
 	$(CC) $(CFLAGS) -MM $< -MF $*.d
