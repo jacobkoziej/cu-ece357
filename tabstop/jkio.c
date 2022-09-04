@@ -54,6 +54,24 @@ error:
 	return NULL;
 }
 
+int myfflush(struct MYSTREAM *stream)
+{
+	if (!stream->bufuse) return 0;
+
+	const unsigned char *tmp = stream->buf;
+	ssize_t              ret;
+
+	do {
+		ret = write(stream->fd, tmp, stream->bufuse);
+		if (ret < 0) return -1;
+
+		tmp            += ret;
+		stream->bufuse -= ret;
+	} while (ret > 0);
+
+	return 0;
+}
+
 int myfgetc(struct MYSTREAM *stream)
 {
 	ssize_t ret;
