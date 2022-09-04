@@ -33,7 +33,7 @@ struct MYSTREAM *myfdopen(int filedesc, int mode, int bufsiz)
 		return NULL;
 	}
 
-	struct MYSTREAM *s = malloc(sizeof(struct MYSTREAM));
+	struct MYSTREAM *s = calloc(1, sizeof(struct MYSTREAM));
 	if (!s) return NULL;
 
 	if (bufsiz) {
@@ -96,7 +96,7 @@ struct MYSTREAM *myfopen(const char *pathname, int mode, int bufsiz)
 		: open(pathname, flags = O_WRONLY | O_CREAT | O_TRUNC, 0777);
 	if (fd < 0) return NULL;
 
-	struct MYSTREAM *s = malloc(sizeof(struct MYSTREAM));
+	struct MYSTREAM *s = calloc(1, sizeof(struct MYSTREAM));
 	if (!s) return NULL;
 
 	if (bufsiz) {
