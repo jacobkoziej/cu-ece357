@@ -41,9 +41,9 @@ int main(int argc, char **argv)
 {
 	atexit(cleanup);
 
-	static int         opt;
-	static const char *opath;
-	static size_t      bufsiz = TABSTOP_BUFSIZ;
+	int         opt;
+	const char *opath  = NULL;
+	size_t      bufsiz = TABSTOP_BUFSIZ;
 
 	while ((opt = getopt(argc, argv, "o:")) != -1) {
 		switch (opt) {
