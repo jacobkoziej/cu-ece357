@@ -56,7 +56,8 @@ int main(int argc, char **argv)
 	const char *wpath  = NULL;
 	size_t      bufsiz = TABSTOP_BUFSIZ;
 
-	while ((opt = getopt(argc, argv, "b:o:")) != -1) {
+	opterr = 0;
+	while ((opt = getopt(argc, argv, ":b:o:")) != -1) {
 		switch (opt) {
 			case 'b':;
 				// get largest power of 2 up to 64Ki
@@ -73,6 +74,22 @@ int main(int argc, char **argv)
 			case 'o':
 				wpath = optarg;
 				break;
+
+			case '?':
+				fprintf(
+					stderr,
+					"unknown flag: '%c'\n",
+					optopt
+				);
+				return 255;
+
+			case ':':
+				fprintf(
+					stderr,
+					"missing argument: '%c'\n",
+					optopt
+				);
+				return 255;
 
 			default:
 				return 255;
