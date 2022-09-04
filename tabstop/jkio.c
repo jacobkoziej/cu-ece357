@@ -25,6 +25,34 @@
 #include <stdlib.h>
 
 
+struct MYSTREAM *myfdopen(int filedesc, int mode, int bufsiz)
+{
+	if (filedesc < 0 || (mode != O_RDONLY && mode != O_WRONLY) || bufsiz < 0) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	struct MYSTREAM *s = malloc(sizeof(struct MYSTREAM));
+	if (!s) return NULL;
+
+	if (bufsiz) {
+		s->buf = malloc(bufsiz);
+		if (!s->buf) goto error;
+		s->pos    = s->buf;
+		s->bufsiz = bufsiz;
+	}
+
+	s->fd    = filedesc;
+	s->flags = (mode == O_RDONLY) ? O_RDONLY : O_WRONLY | O_CREAT | O_TRUNC;
+
+	return s;
+
+error:
+	free(s);
+
+	return NULL;
+}
+
 struct MYSTREAM *myfopen(const char *pathname, int mode, int bufsiz)
 {
 	if ((mode != O_RDONLY && mode != O_WRONLY) || bufsiz < 0) {
