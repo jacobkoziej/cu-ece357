@@ -21,15 +21,14 @@
 
 
 #include <stddef.h>
-#include <sys/stat.h>
 
 
 struct MYSTREAM {
 	int     fd;
+	int     flags;
 	char   *buf;
 	char   *pos;
 	size_t  bufsiz;
-	mode_t  mode;
 };
 
 
