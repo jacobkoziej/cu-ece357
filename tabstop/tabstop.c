@@ -139,13 +139,7 @@ int main(int argc, char **argv)
 		}
 
 		// check if we need to make a 4-space tabstop
-		int lim;
-		if (val == '\t') {
-			lim = 4;
-			val = ' ';
-		} else {
-			lim = 1;
-		}
+		int lim = (val == '\t') ? val = ' ', 4 : 1;
 
 		for (int i = 0; i < lim; i++)
 			if (myfputc(val, wfp) < 0) {
