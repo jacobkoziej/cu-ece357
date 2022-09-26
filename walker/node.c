@@ -92,6 +92,10 @@ const char *strmode(const mode_t mode)
 	buf[8] = mode & S_IWOTH ? 'w' : '-';
 	buf[9] = mode & S_IXOTH ? 'x' : '-';
 
+	if (mode & S_ISUID) buf[3] = mode & S_IXUSR ? 's' : 'S';
+	if (mode & S_ISGID) buf[6] = mode & S_IXGRP ? 's' : 'S';
+	if (mode & S_ISVTX) buf[9] = mode & S_IXOTH ? 't' : 'T';
+
 	buf[10] = '\0';
 
 	return buf;
