@@ -49,4 +49,7 @@ typedef struct node_cfg_s {
 } node_cfg_t;
 
 
+const char *slpath(const char *restrict path);
+
+
 #endif /* NODE_H */

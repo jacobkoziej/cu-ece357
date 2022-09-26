@@ -17,3 +17,50 @@
  */
 
 #include "node.h"
+
+#include <limits.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+
+const char *slpath(const char *restrict path)
+{
+	size_t bufsiz = PATH_MAX;
+	char  *buf    = NULL;
+
+	do {
+		char *tmp = realloc(buf, bufsiz);
+		if (!tmp) goto error;
+		buf = tmp;
+
+		ssize_t ret = readlink(path, buf, bufsiz);
+
+		if (ret < 0) goto error;
+
+		if (ret == bufsiz) {
+			size_t tmp = bufsiz * 2;
+
+			if ((tmp > SSIZE_MAX) || (tmp < bufsiz)) goto error;
+
+			bufsiz = tmp;
+			continue;
+		}
+
+		buf[ret] = '\0';
+		bufsiz = ret + 1;
+		break;
+	} while (true);
+
+	char *tmp = realloc(buf, bufsiz);
+	if (!tmp) goto error;
+	buf = tmp;
+
+	return buf;
+
+error:
+	if (buf) free(buf);
+
+	return NULL;
+}
