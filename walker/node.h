@@ -27,6 +27,7 @@
 
 typedef struct node_s {
 	const char    *path;
+	const char    *slpath;
 	struct passwd *passwd;
 	struct group  *group;
 	struct stat    stat;
