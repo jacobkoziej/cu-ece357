@@ -33,7 +33,7 @@
 
 
 typedef struct node_s {
-	const char    *mode;
+	char           mode[11];
 	struct passwd *passwd;
 	struct group  *group;
 	const char    *path;
