@@ -16,13 +16,85 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+
+
+#define LNK_CHK (1 << 0)
+#define MTM_CHK (1 << 1)
+#define UID_CHK (1 << 2)
+#define VOL_CHK (1 << 3)
 
 
 int main(int argc, char **argv)
 {
-	(void) argc;
-	(void) argv;
+	static uint_fast8_t flags;
+
+	static const char *path = ".";
+
+	{
+		int opt;
+		opterr = 0;
+		while ((opt = getopt(argc, argv, ":hl:m:u:x")) != -1) {
+			switch (opt) {
+			case 'h':
+				printf(
+					"usage: %s [-l target] [-u user] [-x] [PATH]\n",
+					argv[0]
+				);
+				return 0;
+
+			case 'l':
+				flags |= LNK_CHK;
+				break;
+
+			case 'm':
+				flags |= MTM_CHK;
+				break;
+
+			case 'u':
+				flags |= UID_CHK;
+				break;
+
+			case 'x':
+				flags |= VOL_CHK;
+				break;
+
+			case ':':
+				fprintf(
+					stderr,
+					"missing argument: '%c'\n",
+					optopt
+				);
+				fprintf(
+					stderr,
+					"try '%s -h' for usage information\n",
+					argv[0]
+				);
+				return 255;
+
+			case '?':
+				fprintf(
+					stderr,
+					"unknown flag: '%c'\n",
+					optopt
+				);
+				fprintf(
+					stderr,
+					"try '%s -h' for usage information\n",
+					argv[0]
+				);
+				return 255;
+
+			default:
+				return 255;
+			}
+		}
+	}
+
+	if (argc - optind) path = argv[argc - 1];
 
 	return EXIT_SUCCESS;
 }
