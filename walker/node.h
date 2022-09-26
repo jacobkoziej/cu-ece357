@@ -51,7 +51,7 @@ typedef struct node_cfg_s {
 
 
 const char *slpath(const char *restrict path);
-const char *strmode(const mode_t mode);
+void strmode(char buf[11], const mode_t mode);
 
 
 #endif /* NODE_H */

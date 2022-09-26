@@ -66,10 +66,8 @@ error:
 	return NULL;
 }
 
-const char *strmode(const mode_t mode)
+void strmode(char buf[11], const mode_t mode)
 {
-	char *buf = malloc(11);  // "-rwxrwxrwx\0"
-	if (!buf) return NULL;
 
 	buf[0] = ' ';
 	if (S_ISBLK(mode))  buf[0] = 'b';
@@ -97,6 +95,4 @@ const char *strmode(const mode_t mode)
 	if (mode & S_ISVTX) buf[9] = mode & S_IXOTH ? 't' : 'T';
 
 	buf[10] = '\0';
-
-	return buf;
 }
