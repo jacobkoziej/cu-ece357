@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 
@@ -63,4 +64,35 @@ error:
 	if (buf) free(buf);
 
 	return NULL;
+}
+
+const char *strmode(const mode_t mode)
+{
+	char *buf = malloc(11);  //-rwxrwxrwx\0
+	if (!buf) return NULL;
+
+	buf[0] = ' ';
+	if (S_ISBLK(mode))  buf[0] = 'b';
+	if (S_ISCHR(mode))  buf[0] = 'c';
+	if (S_ISFIFO(mode)) buf[0] = 'p';
+	if (S_ISREG(mode))  buf[0] = '-';
+	if (S_ISDIR(mode))  buf[0] = 'd';
+	if (S_ISLNK(mode))  buf[0] = 'l';
+	if (S_ISSOCK(mode)) buf[0] = 's';
+
+	buf[1] = mode & S_IRUSR ? 'r' : '-';
+	buf[2] = mode & S_IWUSR ? 'w' : '-';
+	buf[3] = mode & S_IXUSR ? 'x' : '-';
+
+	buf[4] = mode & S_IRGRP ? 'r' : '-';
+	buf[5] = mode & S_IWGRP ? 'w' : '-';
+	buf[6] = mode & S_IXGRP ? 'x' : '-';
+
+	buf[7] = mode & S_IROTH ? 'r' : '-';
+	buf[8] = mode & S_IWOTH ? 'w' : '-';
+	buf[9] = mode & S_IXOTH ? 'x' : '-';
+
+	buf[10] = '\0';
+
+	return buf;
 }
