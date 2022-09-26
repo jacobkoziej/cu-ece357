@@ -20,4 +20,17 @@
 #define NODE_H
 
 
+#include <grp.h>
+#include <pwd.h>
+#include <sys/stat.h>
+
+
+typedef struct node_s {
+	const char    *path;
+	struct passwd *passwd;
+	struct group  *group;
+	struct stat    stat;
+} node_t;
+
+
 #endif /* NODE_H */
