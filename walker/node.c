@@ -40,7 +40,7 @@ const char *slpath(const char *restrict path)
 
 		if (ret < 0) goto error;
 
-		if (ret == bufsiz) {
+		if ((size_t) ret == bufsiz) {
 			size_t tmp = bufsiz * 2;
 
 			if ((tmp > SSIZE_MAX) || (tmp < bufsiz)) goto error;
