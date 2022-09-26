@@ -22,7 +22,14 @@
 
 #include <grp.h>
 #include <pwd.h>
+#include <stdint.h>
 #include <sys/stat.h>
+
+
+#define NODE_CFG_LNK (1 << 0)
+#define NODE_CFG_MTM (1 << 1)
+#define NODE_CFG_UID (1 << 2)
+#define NODE_CFG_VOL (1 << 3)
 
 
 typedef struct node_s {
@@ -32,6 +39,14 @@ typedef struct node_s {
 	struct group  *group;
 	struct stat    stat;
 } node_t;
+
+typedef struct node_cfg_s {
+	uint_fast8_t  flags;
+	const char   *slpath;
+	long          mtime_s;
+	uid_t         uid;
+	dev_t         vol;
+} node_cfg_t;
 
 
 #endif /* NODE_H */
