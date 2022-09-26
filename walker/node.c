@@ -68,15 +68,38 @@ error:
 
 void strmode(char buf[11], const mode_t mode)
 {
+	switch (mode & S_IFMT) {
+		case S_IFBLK:
+			buf[0] = 'b';
+			break;
 
-	buf[0] = ' ';
-	if (S_ISBLK(mode))  buf[0] = 'b';
-	if (S_ISCHR(mode))  buf[0] = 'c';
-	if (S_ISFIFO(mode)) buf[0] = 'p';
-	if (S_ISREG(mode))  buf[0] = '-';
-	if (S_ISDIR(mode))  buf[0] = 'd';
-	if (S_ISLNK(mode))  buf[0] = 'l';
-	if (S_ISSOCK(mode)) buf[0] = 's';
+		case S_IFCHR:
+			buf[0] = 'c';
+			break;
+
+		case S_IFIFO:
+			buf[0] = 'p';
+			break;
+
+		case S_IFREG:
+			buf[0] = '-';
+			break;
+
+		case S_IFDIR:
+			buf[0] = 'd';
+			break;
+
+		case S_IFLNK:
+			buf[0] = 'l';
+			break;
+
+		case S_IFSOCK:
+			buf[0] = 's';
+			break;
+
+		default:
+			buf[0] = ' ';
+	}
 
 	buf[1] = mode & S_IRUSR ? 'r' : '-';
 	buf[2] = mode & S_IWUSR ? 'w' : '-';
