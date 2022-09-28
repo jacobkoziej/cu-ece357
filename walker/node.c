@@ -18,12 +18,36 @@
 
 #include "node.h"
 
+#include <grp.h>
 #include <limits.h>
+#include <pwd.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+
+int node_parse(node_t *restrict node)
+{
+	if (S_ISLNK(node->stat.st_mode)) node->slpath = slpath(node->path);
+	if (!node->slpath) return -1;
+
+	strmode(node->mode, node->stat.st_mode);
+
+	node->passwd = getpwuid(node->stat.st_uid);
+	if (!node->passwd) goto error;
+
+	node->group = getgrgid(node->stat.st_gid);
+	if (!node->group) goto error;
+
+	return 0;
+
+error:
+	if (node->slpath) free((void*) node->slpath);
+
+	return -1;
+}
 
 
 const char *slpath(const char *restrict path)

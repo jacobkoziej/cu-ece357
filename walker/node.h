@@ -50,6 +50,7 @@ typedef struct node_cfg_s {
 } node_cfg_t;
 
 
+int         node_parse(node_t *restrict node);
 const char *slpath(const char *restrict path);
 void        strmode(char buf[11], const mode_t mode);
 
