@@ -23,8 +23,12 @@
 #include <pwd.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
+#include <sys/sysmacros.h>
+#include <time.h>
 #include <unistd.h>
 
 
@@ -51,6 +55,110 @@ error:
 	return -1;
 }
 
+int node_fprint(FILE *restrict stream, const node_t *restrict node)
+{
+	int total = 0;
+	int tmp;
+
+	// inode
+	tmp = fprintf(stream, "%ld", node->stat.st_ino);
+	if (tmp < 0) return -1;
+	total += tmp;
+	if (fputc('\t', stream) == EOF) return -1;
+	++total;
+
+	// blocks
+	tmp = fprintf(stream, "%ld", node->stat.st_blocks);
+	if (tmp < 0) return -1;
+	total += tmp;
+	if (fputc('\t', stream) == EOF) return -1;
+	++total;
+
+	// mode
+	tmp = fprintf(stream, "%s", node->mode);
+	if (tmp < 0) return -1;
+	total += tmp;
+	if (fputc('\t', stream) == EOF) return -1;
+	++total;
+
+	// links
+	tmp = fprintf(stream, "%ld", node->stat.st_nlink);
+	if (tmp < 0) return -1;
+	total += tmp;
+	if (fputc('\t', stream) == EOF) return -1;
+	++total;
+
+	// user
+	if (node->passwd->pw_name) {
+		tmp = fprintf(stream, "%s", node->passwd->pw_name);
+		if (tmp < 0) return -1;
+		total += tmp;
+		if (fputc('\t', stream) == EOF) return -1;
+		++total;
+	} else {
+		tmp = fprintf(stream, "%d", node->passwd->pw_uid);
+		if (tmp < 0) return -1;
+		total += tmp;
+		if (fputc('\t', stream) == EOF) return -1;
+		++total;
+	}
+
+	// group
+	if (node->group->gr_name) {
+		tmp = fprintf(stream, "%s", node->group->gr_name);
+		if (tmp < 0) return -1;
+		total += tmp;
+		if (fputc('\t', stream) == EOF) return -1;
+		++total;
+	} else {
+		tmp = fprintf(stream, "%d", node->group->gr_gid);
+		if (tmp < 0) return -1;
+		total += tmp;
+		if (fputc('\t', stream) == EOF) return -1;
+		++total;
+	}
+
+	// size
+	if (S_ISBLK(node->stat.st_mode) || S_ISCHR(node->stat.st_mode)) {
+		tmp = fprintf(
+			stream,
+			"%d,%d",
+			major(node->stat.st_dev),
+			minor(node->stat.st_dev)
+		);
+		if (tmp < 0) return -1;
+		total += tmp;
+		if (fputc('\t', stream) == EOF) return -1;
+		++total;
+	} else {
+		tmp = fprintf(stream, "%ld", node->stat.st_size);
+		if (tmp < 0) return -1;
+		total += tmp;
+		if (fputc('\t', stream) == EOF) return -1;
+		++total;
+	}
+
+	// mtime
+	char *time = ctime(&node->stat.st_mtim.tv_sec);
+	time[strlen(time) - 1] = '\0';                   // remove newline
+	tmp = fprintf(stream, "%s", time);
+	if (tmp < 0) return -1;
+	total += tmp;
+	if (fputc('\t', stream) == EOF) return -1;
+	++total;
+
+	// path
+	tmp = fprintf(stream, "%s", node->path);
+	if (tmp < 0) return -1;
+	if (node->slpath) {
+		tmp = fprintf(stream, " -> %s", node->slpath);
+		if (tmp < 0) return -1;
+	}
+	if (fputc('\t', stream) == EOF) return -1;
+	++total;
+
+	return total;
+}
 
 const char *slpath(const char *restrict path)
 {
