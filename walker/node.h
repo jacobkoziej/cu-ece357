@@ -41,15 +41,6 @@ typedef struct node_s {
 	struct stat    stat;
 } node_t;
 
-typedef struct node_cfg_s {
-	uint_fast8_t  flags;
-	dev_t         sl_dev;
-	ino_t         sl_ino;
-	long          mtime_s;
-	uid_t         uid;
-	dev_t         vol;
-} node_cfg_t;
-
 
 int         node_parse(node_t *node);
 int         node_fprint(FILE *stream, const node_t *node);
