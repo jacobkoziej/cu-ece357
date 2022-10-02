@@ -16,15 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <dirent.h>
 #include <errno.h>
 #include <limits.h>
 #include <pwd.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include "node.h"
 
 
 #define LNK_CHK (1 << 0)
@@ -43,6 +48,86 @@ static uid_t       uid;
 static long        mtime;
 
 static struct stat st;
+static node_t      node;
+
+
+static int walk(const char *path)
+{
+	// handle non-directories
+	if (!S_ISDIR(node.stat.st_mode)) {
+		node.path = path;
+		if (lstat(node.path, &node.stat) < 0) return -1;
+		if (node_parse(&node) < 0)            return -1;
+		if (node_fprint(stdout, &node) < 0)   return -1;
+		return 0;
+	}
+
+	DIR *dir = opendir(path);
+	if (!dir) return -1;
+
+	size_t  pathsiz    = strlen(path) + 1;
+	size_t  bufsiz     = PATH_MAX;
+	size_t  maxentsiz  = PATH_MAX;
+	char   *buf;
+
+	while (pathsiz > bufsiz) bufsiz *= 2;
+	buf = malloc(bufsiz);
+	if (!buf) goto error;
+
+	strncpy(buf, path, pathsiz);
+	buf[pathsiz - 1] = '/';
+	if ((buf[pathsiz - 2] == '/')) --pathsiz;
+	maxentsiz = bufsiz - pathsiz;
+
+	struct dirent *ent;
+
+	while (errno = 0, ent = readdir(dir)) {
+		if (!strcmp(ent->d_name, "."))  continue;
+		if (!strcmp(ent->d_name, "..")) continue;
+
+		size_t entsiz = strlen(ent->d_name) + 1;
+
+		if (entsiz > maxentsiz) {
+			do {
+				bufsiz    *= 2;
+				maxentsiz  = bufsiz - pathsiz;
+			} while (entsiz > maxentsiz);
+
+			char *tmp = realloc(buf, bufsiz);
+			if (!tmp) goto error;
+
+			buf = tmp;
+		}
+
+		strncpy(buf + pathsiz, ent->d_name, entsiz);
+		node.path = buf;
+
+		if (lstat(node.path, &node.stat) < 0) goto error;
+
+		// free previous symlink path (if allocated)
+		if (node.slpath) {
+			free((char*) node.slpath);
+			node.slpath = NULL;
+		}
+
+		if (node_parse(&node) < 0)          goto error;
+		if (node_fprint(stdout, &node) < 0) goto error;
+
+		if (S_ISDIR(node.stat.st_mode) && (walk(buf) < 0)) goto error;
+	}
+	if (errno) goto error;
+
+	free(buf);
+	closedir(dir);
+
+	return 0;
+
+error:
+	if (buf) free(buf);
+	if (dir) closedir(dir);
+
+	return -1;
+}
 
 
 int main(int argc, char **argv)
@@ -177,6 +262,16 @@ int main(int argc, char **argv)
 			}
 			vol = st.st_dev;
 		}
+	}
+
+
+	if (lstat(path, &node.stat) < 0) {
+		perror("walk failed");
+		return EXIT_FAILURE;
+	}
+	if (walk(path) < 0) {
+		perror("walk failed");
+		return EXIT_FAILURE;
 	}
 
 	return EXIT_SUCCESS;
