@@ -130,8 +130,15 @@ error:
 }
 
 
+static void cleanup(void)
+{
+	if (node.slpath) free((char*) node.slpath);
+}
+
 int main(int argc, char **argv)
 {
+	atexit(cleanup);
+
 	{
 		int opt;
 		const char *strlink  = NULL;
