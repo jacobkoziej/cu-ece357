@@ -51,9 +51,9 @@ typedef struct node_cfg_s {
 } node_cfg_t;
 
 
-int         node_parse(node_t *restrict node);
-int         node_fprint(FILE *restrict stream, const node_t *restrict node);
-const char *slpath(const char *restrict path);
+int         node_parse(node_t *node);
+int         node_fprint(FILE *stream, const node_t *node);
+const char *slpath(const char *path);
 void        strmode(char buf[11], const mode_t mode);
 
 

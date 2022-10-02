@@ -32,7 +32,7 @@
 #include <unistd.h>
 
 
-int node_parse(node_t *restrict node)
+int node_parse(node_t *node)
 {
 	if (S_ISLNK(node->stat.st_mode)) {
 		node->slpath = slpath(node->path);
@@ -55,7 +55,7 @@ error:
 	return -1;
 }
 
-int node_fprint(FILE *restrict stream, const node_t *restrict node)
+int node_fprint(FILE *stream, const node_t *node)
 {
 	int total = 0;
 	int tmp;
@@ -160,7 +160,7 @@ int node_fprint(FILE *restrict stream, const node_t *restrict node)
 	return total;
 }
 
-const char *slpath(const char *restrict path)
+const char *slpath(const char *path)
 {
 	size_t bufsiz = PATH_MAX;
 	char  *buf    = NULL;
