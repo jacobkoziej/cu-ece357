@@ -51,6 +51,7 @@ static struct stat st;
 static node_t      node;
 
 
+/*
 static int walk(const char *path)
 {
 	// handle non-directories
@@ -128,6 +129,7 @@ error:
 
 	return -1;
 }
+*/
 
 
 static void cleanup(void)
@@ -272,6 +274,7 @@ int main(int argc, char **argv)
 	}
 
 
+	/*
 	if (lstat(path, &node.stat) < 0) {
 		perror("walk failed");
 		return EXIT_FAILURE;
@@ -280,6 +283,7 @@ int main(int argc, char **argv)
 		perror("walk failed");
 		return EXIT_FAILURE;
 	}
+	*/
 
 	return EXIT_SUCCESS;
 }
