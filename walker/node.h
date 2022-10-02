@@ -43,7 +43,8 @@ typedef struct node_s {
 
 typedef struct node_cfg_s {
 	uint_fast8_t  flags;
-	const char   *slpath;
+	dev_t         sl_dev;
+	ino_t         sl_ino;
 	long          mtime_s;
 	uid_t         uid;
 	dev_t         vol;
