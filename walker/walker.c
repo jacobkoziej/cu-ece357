@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 					"try '%s -h' for usage information\n",
 					argv[0]
 				);
-				return 255;
+				return EXIT_FAILURE;
 
 			case '?':
 				fprintf(
@@ -86,10 +86,10 @@ int main(int argc, char **argv)
 					"try '%s -h' for usage information\n",
 					argv[0]
 				);
-				return 255;
+				return EXIT_FAILURE;
 
 			default:
-				return 255;
+				return EXIT_FAILURE;
 			}
 		}
 	}
