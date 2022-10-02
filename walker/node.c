@@ -154,7 +154,7 @@ int node_fprint(FILE *restrict stream, const node_t *restrict node)
 		tmp = fprintf(stream, " -> %s", node->slpath);
 		if (tmp < 0) return -1;
 	}
-	if (fputc('\t', stream) == EOF) return -1;
+	if (fputc('\n', stream) == EOF) return -1;
 	++total;
 
 	return total;
