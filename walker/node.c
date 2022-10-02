@@ -30,8 +30,10 @@
 
 int node_parse(node_t *restrict node)
 {
-	if (S_ISLNK(node->stat.st_mode)) node->slpath = slpath(node->path);
-	if (!node->slpath) return -1;
+	if (S_ISLNK(node->stat.st_mode)) {
+		node->slpath = slpath(node->path);
+		if (!node->slpath) return -1;
+	}
 
 	strmode(node->mode, node->stat.st_mode);
 
