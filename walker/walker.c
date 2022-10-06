@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <pwd.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -27,6 +28,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "node.h"
@@ -49,9 +51,41 @@ typedef struct walk_s {
 } walk_t;
 
 
-static char   pathbuf[PATH_MAX];
-static walk_t walk;
+static char        pathbuf[PATH_MAX];
+static struct stat st;
+static walk_t      walk;
 
+
+static bool skip(void)
+{
+	if (walk.flags & LNK_CHK) {
+		if (walk.node.slpath) return true;
+
+		if (stat(walk.node.slpath, &st) < 0) return true;
+
+		if ((st.st_dev != walk.sl_dev) || (st.st_ino != walk.sl_ino)) {
+			fprintf(
+				stderr,
+				"note: not crossing mount point at %s\n",
+				walk.node.path
+			);
+			return true;
+		}
+	}
+
+	if (walk.flags & MTM_CHK) {
+		if (time(NULL) - walk.node.stat.st_mtim.tv_sec <= walk.mtime)
+			return true;
+	}
+
+	if ((walk.flags & UID_CHK) && (walk.node.passwd->pw_uid != walk.uid))
+		return true;
+
+	if ((walk.flags & VOL_CHK) && (walk.node.stat.st_dev != walk.vol))
+		return true;
+
+	return false;
+}
 
 static int walker(char *path, size_t pathuse, size_t pathsiz)
 {
@@ -76,6 +110,8 @@ static int walker(char *path, size_t pathuse, size_t pathsiz)
 
 		return -1;
 	}
+
+	if (walk.flags && skip()) return 0;
 
 	if (node_fprint(stdout, &walk.node) < 0) {
 		fprintf(
