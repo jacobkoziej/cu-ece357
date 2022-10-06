@@ -160,8 +160,10 @@ static int walker(char *path, size_t pathuse, size_t pathsiz)
 		return -1;
 	}
 
-	path[pathuse++ - 1] = '/';
-	path[pathuse   - 1] = '\0';
+	if (path[pathuse - 2] != '/') {
+		path[pathuse++ - 1] = '/';
+		path[pathuse   - 1] = '\0';
+	}
 
 	char *tail = path + pathuse - 1;
 
