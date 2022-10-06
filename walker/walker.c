@@ -60,36 +60,35 @@ static int walker(char *path, size_t pathuse, size_t pathsiz)
 		return (errno != EACCES) ? 0 : -1;
 	}
 
-	if (!S_ISDIR(walk.node.stat.st_mode)) {
-		walk.node.path = path;
-		if (walk.node.slpath) {
-			free((char*) walk.node.slpath);
-			walk.node.slpath = NULL;
-		}
-
-		if (node_parse(&walk.node) < 0) {
-			fprintf(
-				stderr,
-				"failed to parse node %s: %s\n",
-				walk.node.path,
-				strerror(errno)
-			);
-
-			return -1;
-		}
-		if (node_fprint(stdout, &walk.node) < 0) {
-			fprintf(
-				stderr,
-				"failed to print node %s: %s\n",
-				walk.node.path,
-				strerror(errno)
-			);
-
-			return -1;
-		}
-
-		return 0;
+	walk.node.path = path;
+	if (walk.node.slpath) {
+		free((char*) walk.node.slpath);
+		walk.node.slpath = NULL;
 	}
+
+	if (node_parse(&walk.node) < 0) {
+		fprintf(
+			stderr,
+			"failed to parse node %s: %s\n",
+			walk.node.path,
+			strerror(errno)
+		);
+
+		return -1;
+	}
+
+	if (node_fprint(stdout, &walk.node) < 0) {
+		fprintf(
+			stderr,
+			"failed to print node %s: %s\n",
+			walk.node.path,
+			strerror(errno)
+		);
+
+		return -1;
+	}
+
+	if (!S_ISDIR(walk.node.stat.st_mode)) return 0;
 
 	// make sure we can add a trailing '/' and paths
 	if (pathuse + NAME_MAX + 1 > pathsiz) {
