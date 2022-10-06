@@ -57,36 +57,42 @@ static struct stat st;
 static walk_t      walk;
 
 
-static bool skip(void)
+static bool lnk_chk(void)
 {
-	if (!walk.flags) return false;
+	if (!S_ISLNK(walk.node.stat.st_mode)) return true;
 
-	if (walk.flags & LNK_CHK) {
-		if (!S_ISLNK(walk.node.stat.st_mode)) return true;
+	if (!walk.node.slpath) return true;
 
-		if (!walk.node.slpath) return true;
-
-		if (fstatat(walk.node.dirfd, walk.node.slpath, &st, AT_SYMLINK_NOFOLLOW) < 0)
-			return true;
-
-		if ((st.st_dev != walk.sl_dev) || (st.st_ino != walk.sl_ino))
-			return true;
-	}
-
-	if (walk.flags & MTM_CHK) {
-		if (time(NULL) - walk.node.stat.st_mtim.tv_sec <= walk.mtime)
-			return true;
-	}
-
-	if ((walk.flags & UID_CHK) && (walk.node.passwd->pw_uid != walk.uid))
+	if (fstatat(walk.node.dirfd, walk.node.slpath, &st, AT_SYMLINK_NOFOLLOW) < 0)
 		return true;
 
-	if ((walk.flags & VOL_CHK) && (walk.node.stat.st_dev != walk.vol)) {
+	if ((st.st_dev != walk.sl_dev) || (st.st_ino != walk.sl_ino))
+		return true;
+
+	return false;
+}
+
+static bool mtm_chk(void)
+{
+	return (time(NULL) - walk.node.stat.st_mtim.tv_sec <= walk.mtime)
+		? true
+		: false;
+}
+
+static bool uid_chk(void)
+{
+	return (walk.node.passwd->pw_uid != walk.uid) ? true : false;
+}
+
+static bool vol_chk(void)
+{
+	if (walk.node.stat.st_dev != walk.vol) {
 		fprintf(
 			stderr,
 			"note: not crossing mount point at %s\n",
 			walk.node.path
 		);
+
 		return true;
 	}
 
@@ -117,7 +123,16 @@ static int walker(char *path, size_t pathuse, size_t pathsiz)
 		return -1;
 	}
 
-	if (!skip()) {
+	bool skip = false;
+	if (walk.flags) {
+		if (walk.flags & LNK_CHK) skip |= lnk_chk();
+		if (walk.flags & MTM_CHK) skip |= mtm_chk();
+		if (walk.flags & UID_CHK) skip |= uid_chk();
+
+		if (walk.flags & VOL_CHK && vol_chk()) return 0;
+	}
+
+	if (!skip) {
 		if (node_fprint(stdout, &walk.node) < 0) {
 			fprintf(
 				stderr,
