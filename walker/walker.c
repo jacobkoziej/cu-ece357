@@ -18,6 +18,7 @@
 
 #include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <pwd.h>
 #include <stdbool.h>
@@ -61,18 +62,15 @@ static bool skip(void)
 	if (!walk.flags) return false;
 
 	if (walk.flags & LNK_CHK) {
-		if (walk.node.slpath) return true;
+		if (!S_ISLNK(walk.node.stat.st_mode)) return true;
 
-		if (stat(walk.node.slpath, &st) < 0) return true;
+		if (!walk.node.slpath) return true;
 
-		if ((st.st_dev != walk.sl_dev) || (st.st_ino != walk.sl_ino)) {
-			fprintf(
-				stderr,
-				"note: not crossing mount point at %s\n",
-				walk.node.path
-			);
+		if (fstatat(walk.node.dirfd, walk.node.slpath, &st, AT_SYMLINK_NOFOLLOW) < 0)
 			return true;
-		}
+
+		if ((st.st_dev != walk.sl_dev) || (st.st_ino != walk.sl_ino))
+			return true;
 	}
 
 	if (walk.flags & MTM_CHK) {
@@ -83,8 +81,14 @@ static bool skip(void)
 	if ((walk.flags & UID_CHK) && (walk.node.passwd->pw_uid != walk.uid))
 		return true;
 
-	if ((walk.flags & VOL_CHK) && (walk.node.stat.st_dev != walk.vol))
+	if ((walk.flags & VOL_CHK) && (walk.node.stat.st_dev != walk.vol)) {
+		fprintf(
+			stderr,
+			"note: not crossing mount point at %s\n",
+			walk.node.path
+		);
 		return true;
+	}
 
 	return false;
 }
@@ -157,6 +161,18 @@ static int walker(char *path, size_t pathuse, size_t pathsiz)
 		return -1;
 	}
 
+	int old_dirfd = walk.node.dirfd;
+	if ((walk.node.dirfd = dirfd(dir)) < 0) {
+		fprintf(
+			stderr,
+			"failed to get directory file descriptor: %s: %s\n",
+			path,
+			strerror(errno)
+		);
+
+		return -1;
+	}
+
 	struct dirent *ent;
 	while (errno = 0, ent = readdir(dir)) {
 		if (!strcmp(ent->d_name, "."))  continue;
@@ -169,6 +185,8 @@ static int walker(char *path, size_t pathuse, size_t pathsiz)
 	if (errno) goto error;
 
 	closedir(dir);
+
+	walk.node.dirfd = old_dirfd;
 
 	return 0;
 

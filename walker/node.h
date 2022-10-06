@@ -38,6 +38,7 @@ typedef struct node_s {
 	struct group  *group;
 	const char    *path;
 	const char    *slpath;
+	int            dirfd;
 	struct stat    stat;
 } node_t;
 
