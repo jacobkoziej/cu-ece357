@@ -39,99 +39,107 @@
 
 
 typedef struct walk_s {
-	uint_fast8_t  flags;
-	const char   *path;
-	dev_t         sl_dev;
-	ino_t         sl_ino;
-	dev_t         vol;
-	uid_t         uid;
-	long          mtime;
-	node_t        node;
+	uint_fast8_t flags;
+	dev_t        sl_dev;
+	ino_t        sl_ino;
+	dev_t        vol;
+	uid_t        uid;
+	long         mtime;
+	node_t       node;
 } walk_t;
 
 
+static char   pathbuf[PATH_MAX];
 static walk_t walk;
 
 
-/*
-static int walk(const char *path)
+static int walker(char *path, size_t pathuse, size_t pathsiz)
 {
-	// handle non-directories
-	if (!S_ISDIR(node.stat.st_mode)) {
-		node.path = path;
-		if (lstat(node.path, &node.stat) < 0) return -1;
-		if (node_parse(&node) < 0)            return -1;
-		if (node_fprint(stdout, &node) < 0)   return -1;
+	if (lstat(path, &walk.node.stat) < 0) {
+		perror(path);
+		return (errno != EACCES) ? 0 : -1;
+	}
+
+	if (!S_ISDIR(walk.node.stat.st_mode)) {
+		walk.node.path = path;
+		if (walk.node.slpath) {
+			free((char*) walk.node.slpath);
+			walk.node.slpath = NULL;
+		}
+
+		if (node_parse(&walk.node) < 0) {
+			fprintf(
+				stderr,
+				"failed to parse node %s: %s\n",
+				walk.node.path,
+				strerror(errno)
+			);
+
+			return -1;
+		}
+		if (node_fprint(stdout, &walk.node) < 0) {
+			fprintf(
+				stderr,
+				"failed to print node %s: %s\n",
+				walk.node.path,
+				strerror(errno)
+			);
+
+			return -1;
+		}
+
 		return 0;
 	}
 
+	// make sure we can add a trailing '/' and paths
+	if (pathuse + NAME_MAX + 1 > pathsiz) {
+		fprintf(
+			stderr,
+			"can't recurse into %s: %s\n",
+			path,
+			strerror(ENAMETOOLONG)
+		);
+
+		return -1;
+	}
+
+	path[pathuse++ - 1] = '/';
+	path[pathuse   - 1] = '\0';
+
+	char *tail = path + pathuse - 1;
+
 	DIR *dir = opendir(path);
-	if (!dir) return -1;
+	if (!dir) {
+		fprintf(
+			stderr,
+			"failed to open directory: %s: %s\n",
+			path,
+			strerror(errno)
+		);
 
-	size_t  pathsiz    = strlen(path) + 1;
-	size_t  bufsiz     = PATH_MAX;
-	size_t  maxentsiz  = PATH_MAX;
-	char   *buf;
-
-	while (pathsiz > bufsiz) bufsiz *= 2;
-	buf = malloc(bufsiz);
-	if (!buf) goto error;
-
-	strncpy(buf, path, pathsiz);
-	buf[pathsiz - 1] = '/';
-	if ((buf[pathsiz - 2] == '/')) --pathsiz;
-	maxentsiz = bufsiz - pathsiz;
+		return -1;
+	}
 
 	struct dirent *ent;
-
 	while (errno = 0, ent = readdir(dir)) {
 		if (!strcmp(ent->d_name, "."))  continue;
 		if (!strcmp(ent->d_name, "..")) continue;
 
-		size_t entsiz = strlen(ent->d_name) + 1;
-
-		if (entsiz > maxentsiz) {
-			do {
-				bufsiz    *= 2;
-				maxentsiz  = bufsiz - pathsiz;
-			} while (entsiz > maxentsiz);
-
-			char *tmp = realloc(buf, bufsiz);
-			if (!tmp) goto error;
-
-			buf = tmp;
-		}
-
-		strncpy(buf + pathsiz, ent->d_name, entsiz);
-		node.path = buf;
-
-		if (lstat(node.path, &node.stat) < 0) goto error;
-
-		// free previous symlink path (if allocated)
-		if (node.slpath) {
-			free((char*) node.slpath);
-			node.slpath = NULL;
-		}
-
-		if (node_parse(&node) < 0)          goto error;
-		if (node_fprint(stdout, &node) < 0) goto error;
-
-		if (S_ISDIR(node.stat.st_mode) && (walk(buf) < 0)) goto error;
+		size_t d_namelen = strlen(ent->d_name);
+		strncpy(tail, ent->d_name, NAME_MAX + 1);
+		walker(path, pathuse + d_namelen, pathsiz);
 	}
 	if (errno) goto error;
 
-	free(buf);
 	closedir(dir);
 
 	return 0;
 
 error:
-	if (buf) free(buf);
 	if (dir) closedir(dir);
 
 	return -1;
 }
-*/
 
 
 static void cleanup(void)
@@ -209,7 +217,17 @@ int main(int argc, char **argv)
 			}
 		}
 
-		walk.path = (argc - optind) ? argv[argc - 1] : ".";
+		pathbuf[PATH_MAX - 1] = '\0';
+		strncpy(
+			pathbuf,
+			(argc - optind) ? argv[argc - 1] : ".",
+			PATH_MAX
+		);
+		if (pathbuf[PATH_MAX - 1] != '\0') {
+			errno = ENAMETOOLONG;
+			perror(argv[argc - 1]);
+			return EXIT_FAILURE;
+		}
 
 		if (walk.flags & LNK_CHK) {
 			if (lstat(strlink, &walk.node.stat) < 0) {
@@ -267,7 +285,7 @@ int main(int argc, char **argv)
 		}
 
 		if (walk.flags & VOL_CHK) {
-			if (lstat(walk.path, &walk.node.stat) < 0) {
+			if (lstat(pathbuf, &walk.node.stat) < 0) {
 				perror("failed to get volume information");
 				return EXIT_FAILURE;
 			}
@@ -275,17 +293,8 @@ int main(int argc, char **argv)
 		}
 	}
 
-
-	/*
-	if (lstat(path, &node.stat) < 0) {
-		perror("walk failed");
+	if (walker(pathbuf, strlen(pathbuf) + 1, PATH_MAX) < 0)
 		return EXIT_FAILURE;
-	}
-	if (walk(path) < 0) {
-		perror("walk failed");
-		return EXIT_FAILURE;
-	}
-	*/
 
 	return EXIT_SUCCESS;
 }
