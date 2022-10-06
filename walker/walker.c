@@ -58,6 +58,8 @@ static walk_t      walk;
 
 static bool skip(void)
 {
+	if (!walk.flags) return false;
+
 	if (walk.flags & LNK_CHK) {
 		if (walk.node.slpath) return true;
 
@@ -111,17 +113,17 @@ static int walker(char *path, size_t pathuse, size_t pathsiz)
 		return -1;
 	}
 
-	if (walk.flags && skip()) return 0;
+	if (!skip()) {
+		if (node_fprint(stdout, &walk.node) < 0) {
+			fprintf(
+				stderr,
+				"failed to print node %s: %s\n",
+				walk.node.path,
+				strerror(errno)
+			);
 
-	if (node_fprint(stdout, &walk.node) < 0) {
-		fprintf(
-			stderr,
-			"failed to print node %s: %s\n",
-			walk.node.path,
-			strerror(errno)
-		);
-
-		return -1;
+			return -1;
+		}
 	}
 
 	if (!S_ISDIR(walk.node.stat.st_mode)) return 0;
