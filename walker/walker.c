@@ -19,6 +19,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <limits.h>
 #include <pwd.h>
 #include <stdbool.h>
@@ -363,8 +364,42 @@ int main(int argc, char **argv)
 		}
 	}
 
+	// we need a dirfd for link check in the case the supplied path
+	// is not a directory -- walker() limitation
+	char *dirnamebuf = NULL;
+	DIR  *dir        = NULL;
+	if (walk.flags & LNK_CHK) {
+		if (lstat(pathbuf, &walk.node.stat) < 0) {
+			perror("failed to get path information");
+			return EXIT_FAILURE;
+		}
+
+		if (S_ISDIR(walk.node.stat.st_mode)) {
+			dir = opendir(pathbuf);
+			if (!dir) return -1;
+		} else {
+			dirnamebuf = strdup(pathbuf);
+			if (!dirnamebuf) return -1;
+
+			char *tmp = dirname(dirnamebuf);
+			dir = opendir(tmp);
+			if (!dir) goto error;
+		}
+
+		walk.node.dirfd = dirfd(dir);
+	}
+
 	if (walker(pathbuf, strlen(pathbuf) + 1, PATH_MAX) < 0)
-		return EXIT_FAILURE;
+		goto error;
+
+	if (dirnamebuf) free(dirnamebuf);
+	if (dir)        closedir(dir);
 
 	return EXIT_SUCCESS;
+
+error:
+	if (dirnamebuf) free(dirnamebuf);
+	if (dir)        closedir(dir);
+
+	return EXIT_FAILURE;
 }
