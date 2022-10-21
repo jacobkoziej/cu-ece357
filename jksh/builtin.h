@@ -21,6 +21,7 @@
 
 
 int  cd(char **argv, char *homedir);
+int  export(char **argv);
 int  pwd(char **argv);
 void shexit(char **argv);
 

@@ -25,6 +25,9 @@
 #include <unistd.h>
 
 
+extern char **environ;
+
+
 int cd(char **argv, char *homedir)
 {
 	if (*argv && argv[1]) {
@@ -36,6 +39,30 @@ int cd(char **argv, char *homedir)
 
 	if (chdir(dir) < 0) {
 		perror("cd");
+		return 1;
+	}
+
+	return 0;
+}
+
+int export(char **argv)
+{
+	if (!*argv) {
+		for (char **var = environ; *var; var++)
+			puts(*var);
+
+		return 0;
+	}
+
+	char *key = *argv;
+	char *val = *argv;
+
+	// split KEY=val
+	while (*val && *val != '=') ++val;
+	if (*val == '=') *(val++) = '\0';
+
+	if (setenv(key, val, 1) < 0) {
+		perror("failed to set environment variable");
 		return 1;
 	}
 
