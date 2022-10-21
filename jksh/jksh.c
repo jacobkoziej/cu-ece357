@@ -17,9 +17,39 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
+#include "parser.h"
+
+
+static char *ps1;
+
+
+static void cleanup(void)
+{
+	if (ps1) free(ps1);
+}
 
 int main(void)
 {
+	atexit(cleanup);
+
+	char *tmp;
+
+	// prep PS1
+	if ((tmp = getenv("PS1")) && !(ps1 = strdup(tmp))) {
+		perror("couldn't allocate buffer for `PS1`");
+		return EXIT_FAILURE;
+	}
+	if (!ps1 && !(ps1 = strdup(""))) {
+		perror("couldn't allocate buffer for `PS1`");
+		return EXIT_FAILURE;
+	}
+
+	while (1) {
+		printf("%s", ps1);
+	}
+
 	return EXIT_SUCCESS;
 }
