@@ -86,3 +86,11 @@ error:
 
 	return 1;
 }
+
+void shexit(char **argv)
+{
+	if (!*argv) exit(EXIT_SUCCESS);
+
+	// exits with 0 on invalid input
+	exit(atoi(*argv));
+}

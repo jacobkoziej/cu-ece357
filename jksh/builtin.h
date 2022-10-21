@@ -20,8 +20,9 @@
 #define BUILTIN_H
 
 
-int cd(char **argv, char *homedir);
-int pwd(char **argv);
+int  cd(char **argv, char *homedir);
+int  pwd(char **argv);
+void shexit(char **argv);
 
 
 #endif /* BUILTIN_H */
