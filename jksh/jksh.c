@@ -76,6 +76,9 @@ int main(void)
 			return EXIT_FAILURE;
 		}
 
+		if (!*tokens || **tokens == '#') goto no_cmd;
+
+no_cmd:
 		free(input);
 		free_tokens(tokens);
 	}
