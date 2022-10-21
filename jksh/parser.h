@@ -20,6 +20,7 @@
 #define PARSER_H
 
 
+void   free_tokens(char **tokens);
 char **tokenize(char *input);
 
 

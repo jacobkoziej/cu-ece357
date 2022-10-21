@@ -27,6 +27,16 @@
 #define DEFAULT_DELIMS " \t"
 
 
+void free_tokens(char **tokens)
+{
+	if (!tokens) return;
+
+	for (char **tmp = tokens; *tmp; tmp++)
+		free(*tmp);
+
+	free(tokens);
+}
+
 char **tokenize(char *input)
 {
 	char **tokens = calloc(DEFAULT_TOKENS, sizeof(char*));
