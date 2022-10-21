@@ -93,13 +93,26 @@ int main(void)
 			return EXIT_FAILURE;
 		}
 
-		if (!*tokens || **tokens == '#') goto no_cmd;
+		if (!*tokens || **tokens == '#') goto done;
 
-		if (!strcmp("cd", *tokens))   prv_ret = cd(tokens + 1, homedir);
-		if (!strcmp("exit", *tokens)) shexit(tokens + 1);
-		if (!strcmp("pwd", *tokens))  prv_ret = pwd(tokens + 1);
+		if (!strcmp("cd", *tokens)) {
+			prv_ret = cd(tokens + 1, homedir);
+			goto done;
+		}
+		if (!strcmp("exit", *tokens)) {
+			shexit(tokens + 1);
+			goto done;
+		}
+		if (!strcmp("export", *tokens)) {
+			export(tokens + 1);
+			goto done;
+		}
+		if (!strcmp("pwd", *tokens)) {
+			prv_ret = pwd(tokens + 1);
+			goto done;
+		}
 
-no_cmd:
+done:
 		free(input);
 		free_tokens(tokens);
 
