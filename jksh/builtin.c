@@ -17,3 +17,55 @@
  */
 
 #include "builtin.h"
+
+#include <errno.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+
+int pwd(char **argv)
+{
+	if (*argv) {
+		fprintf(stderr, "pwd: too many arguments\n");
+		return 1;
+	}
+
+	size_t  bufsiz = PATH_MAX;
+	char   *buf = malloc(PATH_MAX);
+	if (!buf) {
+		perror("failed to generate cwd buffer");
+		return 1;
+	}
+
+	while (1) {
+		errno = 0;
+		if (!getcwd(buf, bufsiz)) {
+			if (errno != ERANGE) goto error;
+
+			bufsiz *= 2;
+
+			char *tmp = realloc(buf, bufsiz);
+			if (!tmp) goto error;
+
+			buf = tmp;
+
+			continue;
+		}
+
+		break;
+	}
+
+	printf("%s\n", buf);
+
+	free(buf);
+
+	return 0;
+
+error:
+	free(buf);
+	perror("failed to get cwd");
+
+	return 1;
+}

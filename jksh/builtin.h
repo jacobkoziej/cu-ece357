@@ -20,4 +20,7 @@
 #define BUILTIN_H
 
 
+int pwd(char **argv);
+
+
 #endif /* BUILTIN_H */
