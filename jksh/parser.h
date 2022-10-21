@@ -20,4 +20,7 @@
 #define PARSER_H
 
 
+char **tokenize(char *input);
+
+
 #endif /* PARSER_H */

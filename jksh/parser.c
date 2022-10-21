@@ -17,3 +17,53 @@
  */
 
 #include "parser.h"
+
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+#define DEFAULT_TOKENS 4
+#define DEFAULT_DELIMS " \t"
+
+
+char **tokenize(char *input)
+{
+	char **tokens = calloc(DEFAULT_TOKENS, sizeof(char*));
+	if (!tokens) return NULL;
+
+	size_t token_cnt = DEFAULT_TOKENS;
+
+	size_t  i = 0;
+	char   *token = strtok(input, DEFAULT_DELIMS);
+	while (token) {
+		// we want to have enough space for the
+		// current term + NULL terminator
+		if (i + 2 >= token_cnt) {
+			token_cnt *= 2;
+			char **tmp = realloc(tokens, token_cnt * sizeof(char*));
+			if (!tmp) goto error;
+
+			tokens = tmp;
+		}
+
+		tokens[i] = strdup(token);
+		if (!tokens[i]) goto error;
+		++i;
+		token = strtok(NULL, DEFAULT_DELIMS);
+	}
+
+	tokens[i] = NULL;
+
+	return tokens;
+
+error:
+	while (i) {
+		free(tokens[i]);
+		--i;
+	}
+
+	free(tokens);
+
+	return NULL;
+}
