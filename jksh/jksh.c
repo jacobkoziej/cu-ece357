@@ -22,9 +22,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "builtin.h"
 #include "parser.h"
 
 
+static int   prv_ret;
 static char *ps1;
 
 
@@ -77,6 +79,8 @@ int main(void)
 		}
 
 		if (!*tokens || **tokens == '#') goto no_cmd;
+
+		if (!strcmp("pwd", *tokens)) prv_ret = pwd(tokens + 1);
 
 no_cmd:
 		free(input);
