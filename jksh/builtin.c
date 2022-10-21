@@ -25,6 +25,23 @@
 #include <unistd.h>
 
 
+int cd(char **argv, char *homedir)
+{
+	if (*argv && argv[1]) {
+		fprintf(stderr, "cd: too many arguments\n");
+		return 1;
+	}
+
+	char *dir = (*argv) ? *argv : homedir;
+
+	if (chdir(dir) < 0) {
+		perror("cd");
+		return 1;
+	}
+
+	return 0;
+}
+
 int pwd(char **argv)
 {
 	if (*argv) {

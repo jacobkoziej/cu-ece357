@@ -20,6 +20,7 @@
 #define BUILTIN_H
 
 
+int cd(char **argv, char *homedir);
 int pwd(char **argv);
 
 
