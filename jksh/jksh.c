@@ -26,13 +26,18 @@
 #include "parser.h"
 
 
+#define DEFAULT_HOMEDIR "/"
+
+
+static char *homedir;
 static int   prv_ret;
 static char *ps1;
 
 
 static void cleanup(void)
 {
-	if (ps1) free(ps1);
+	if (homedir) free(homedir);
+	if (ps1)     free(ps1);
 }
 
 int main(void)
@@ -48,6 +53,16 @@ int main(void)
 	}
 	if (!ps1 && !(ps1 = strdup(""))) {
 		perror("couldn't allocate buffer for `PS1`");
+		return EXIT_FAILURE;
+	}
+
+	// set home directory
+	if ((tmp = getenv("HOME")) && !(homedir = strdup(tmp))) {
+		perror("couldn't allocate buffer for `HOME`");
+		return EXIT_FAILURE;
+	}
+	if (!homedir && !(homedir = strdup(DEFAULT_HOMEDIR))) {
+		perror("couldn't allocate buffer for `HOME`");
 		return EXIT_FAILURE;
 	}
 
