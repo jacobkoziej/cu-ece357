@@ -71,6 +71,14 @@ int main(void)
 	}
 
 	while (1) {
+		// update PS1
+		tmp = getenv("PS1");
+		if (tmp && strcmp(ps1, tmp)) {
+			free(ps1);
+			ps1 = strdup(tmp);
+			if (!ps1) return EXIT_FAILURE;
+		}
+
 		printf("%s", ps1);
 
 		size_t inputsiz;
