@@ -21,6 +21,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #include "builtin.h"
 #include "parser.h"
@@ -36,6 +39,14 @@ static char  *ps1;
 static char **tokens;
 
 
+static void child(int argc, char **argv)
+{
+	(void) argc;
+	(void) argv;
+
+	exit(0);
+}
+
 static void cleanup(void)
 {
 	if (homedir) free(homedir);
@@ -44,7 +55,7 @@ static void cleanup(void)
 	if (tokens)  free_tokens(tokens);
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
 	atexit(cleanup);
 
@@ -119,6 +130,22 @@ int main(void)
 			prv_ret = pwd(tokens + 1);
 			goto done;
 		}
+
+		pid_t pid;
+
+		switch (pid = fork()) {
+			case -1:
+				perror("couldn't fork");
+				goto done;
+
+			case 0:
+				child(argc, argv);
+				break;
+		}
+
+		int status;
+		waitpid(pid, &status, 0);
+		prv_ret = WEXITSTATUS(status);
 
 done:
 		free(input);
