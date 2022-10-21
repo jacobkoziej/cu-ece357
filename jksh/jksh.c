@@ -16,8 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
+#include <errno.h>
+#include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "parser.h"
@@ -49,6 +51,25 @@ int main(void)
 
 	while (1) {
 		printf("%s", ps1);
+
+		char   *input = NULL;
+		size_t  inputsiz;
+
+		if (errno = 0, getline(&input, &inputsiz, stdin) < 0) {
+			free(input);
+
+			// EOF reached
+			if (!errno) break;
+
+			perror("failed to read shell input");
+			return EXIT_FAILURE;
+		}
+
+		// remove trailing newline (if found)
+		size_t end = strlen(input) - 1;
+		if (input[end] == '\n') input[end] = '\0';
+
+		free(input);
 	}
 
 	return EXIT_SUCCESS;
