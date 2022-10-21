@@ -95,6 +95,7 @@ int main(void)
 
 		if (!*tokens || **tokens == '#') goto no_cmd;
 
+		if (!strcmp("cd", *tokens))  prv_ret = cd(tokens + 1, homedir);
 		if (!strcmp("pwd", *tokens)) prv_ret = pwd(tokens + 1);
 
 no_cmd:
