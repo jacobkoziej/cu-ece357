@@ -29,15 +29,19 @@
 #define DEFAULT_HOMEDIR "/"
 
 
-static char *homedir;
-static int   prv_ret;
-static char *ps1;
+static char  *homedir;
+static char  *input;
+static int    prv_ret;
+static char  *ps1;
+static char **tokens;
 
 
 static void cleanup(void)
 {
 	if (homedir) free(homedir);
+	if (input)   free(input);
 	if (ps1)     free(ps1);
+	if (tokens)  free_tokens(tokens);
 }
 
 int main(void)
@@ -69,12 +73,9 @@ int main(void)
 	while (1) {
 		printf("%s", ps1);
 
-		char   *input = NULL;
-		size_t  inputsiz;
+		size_t inputsiz;
 
 		if (errno = 0, getline(&input, &inputsiz, stdin) < 0) {
-			free(input);
-
 			// EOF reached
 			if (!errno) break;
 
@@ -86,21 +87,24 @@ int main(void)
 		size_t end = strlen(input) - 1;
 		if (input[end] == '\n') input[end] = '\0';
 
-		char **tokens = tokenize(input);
+		tokens = tokenize(input);
 		if (!tokens) {
-			free(input);
 			perror("failed to tokenize shell input");
 			return EXIT_FAILURE;
 		}
 
 		if (!*tokens || **tokens == '#') goto no_cmd;
 
-		if (!strcmp("cd", *tokens))  prv_ret = cd(tokens + 1, homedir);
-		if (!strcmp("pwd", *tokens)) prv_ret = pwd(tokens + 1);
+		if (!strcmp("cd", *tokens))   prv_ret = cd(tokens + 1, homedir);
+		if (!strcmp("exit", *tokens)) shexit(tokens + 1);
+		if (!strcmp("pwd", *tokens))  prv_ret = pwd(tokens + 1);
 
 no_cmd:
 		free(input);
 		free_tokens(tokens);
+
+		input  = NULL;
+		tokens = NULL;
 	}
 
 	return EXIT_SUCCESS;
