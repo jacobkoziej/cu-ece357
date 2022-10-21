@@ -69,7 +69,15 @@ int main(void)
 		size_t end = strlen(input) - 1;
 		if (input[end] == '\n') input[end] = '\0';
 
+		char **tokens = tokenize(input);
+		if (!tokens) {
+			free(input);
+			perror("failed to tokenize shell input");
+			return EXIT_FAILURE;
+		}
+
 		free(input);
+		free_tokens(tokens);
 	}
 
 	return EXIT_SUCCESS;
