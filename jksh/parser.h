@@ -29,6 +29,7 @@ typedef struct job_s {
 } job_t;
 
 
+char **argv_gen(job_t *job, int argc, char **argv);
 void   free_tokens(char **tokens);
 char **tokenize(char *input);
 int    parse_tokens(char **tokens);
