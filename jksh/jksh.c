@@ -21,6 +21,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/resource.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -114,6 +116,11 @@ static void cleanup(void)
 
 int main(int argc, char **argv)
 {
+	static struct rusage  usage;
+	static struct timeval t0;
+	static struct timeval t1;
+	static struct timeval td;
+
 	atexit(cleanup);
 
 	if (argc > 1) {
@@ -212,8 +219,29 @@ int main(int argc, char **argv)
 		}
 
 		int status;
-		waitpid(pid, &status, 0);
+		gettimeofday(&t0, 0);
+		wait4(pid, &status, 0, &usage);
+		gettimeofday(&t1, 0);
 		prv_ret = WEXITSTATUS(status);
+
+		timersub(&t1, &t0, &td);
+
+		fprintf(
+			stderr,
+			"pid: %d, exit code: %d, signal: %d\n",
+			pid,
+			WEXITSTATUS(status),
+			WTERMSIG(status)
+		);
+		fprintf(
+			stderr,
+			"real: %.3f, user: %.3f, sys: %.3f\n",
+			(float) td.tv_sec + ((float) td.tv_usec / 1000000.0),
+			(float) usage.ru_utime.tv_sec +
+			((float) usage.ru_utime.tv_usec / 1000000.0),
+			(float) usage.ru_stime.tv_sec +
+			((float) usage.ru_stime.tv_usec / 1000000.0)
+		);
 
 done:
 		free(input);
