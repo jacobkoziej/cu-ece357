@@ -32,17 +32,18 @@
 #define DEFAULT_HOMEDIR "/"
 
 
-static char   *homedir;
-static char   *input;
-static FILE   *istream;
-static int     prv_ret;
-static char   *ps1;
-static char  **tokens;
-static job_t   job;
+static char  *homedir;
+static char  *input;
+static FILE  *istream;
+static int    prv_ret;
+static char  *ps1;
+static char **tokens;
 
 
 static void child(int argc, char **argv)
 {
+	static job_t job;
+
 	job.tokens  = tokens,
 	job.stdin   = -1;
 	job.stdout  = -1;
