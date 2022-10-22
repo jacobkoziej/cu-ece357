@@ -20,6 +20,15 @@
 #define PARSER_H
 
 
+typedef struct job_s {
+	char **tokens;
+	int    stdin;
+	int    stdout;
+	int    stderr;
+	int    prv_ret;
+} job_t;
+
+
 void   free_tokens(char **tokens);
 char **tokenize(char *input);
 int    parse_tokens(char **tokens);
