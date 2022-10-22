@@ -32,19 +32,72 @@
 #define DEFAULT_HOMEDIR "/"
 
 
-static char  *homedir;
-static char  *input;
-static int    prv_ret;
-static char  *ps1;
-static char **tokens;
+static char   *homedir;
+static char   *input;
+static int     prv_ret;
+static char   *ps1;
+static char  **tokens;
+static job_t   job;
 
 
 static void child(int argc, char **argv)
 {
-	(void) argc;
-	(void) argv;
+	job.tokens  = tokens,
+	job.stdin   = -1;
+	job.stdout  = -1;
+	job.stderr  = -1;
+	job.prv_ret = prv_ret;
 
-	exit(0);
+	char **args = argv_gen(&job, argc, argv);
+	if (!args) exit(127);
+
+	if (job.stdin > -1) {
+		if (dup2(job.stdin, STDIN_FILENO) < 0) {
+			perror("can't dup2() to stdin");
+			goto error;
+		}
+
+		if (close(job.stdin) < 0) {
+			perror("can't close existing stdin file descriptor");
+			goto error;
+		}
+	}
+
+	if (job.stdout > -1) {
+		if (dup2(job.stdout, STDOUT_FILENO) < 0) {
+			perror("can't dup2() to stdout");
+			goto error;
+		}
+
+		if (close(job.stdout) < 0) {
+			perror("can't close existing stdout file descriptor");
+			goto error;
+		}
+	}
+
+	if (job.stderr > -1) {
+		if (dup2(job.stderr, STDERR_FILENO) < 0) {
+			perror("can't dup2() to stderr");
+			goto error;
+		}
+
+		if (close(job.stderr) < 0) {
+			perror("can't close existing stderr file descriptor");
+			goto error;
+		}
+	}
+
+	execvp(args[0], args);
+
+	perror(args[0]);
+
+error:
+	for (char **tmp = args; *tmp; tmp++)
+		free(*tmp);
+
+	free(args);
+
+	exit(127);
 }
 
 static void cleanup(void)
