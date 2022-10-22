@@ -22,6 +22,7 @@
 
 void   free_tokens(char **tokens);
 char **tokenize(char *input);
+int    parse_tokens(char **tokens);
 
 
 #endif /* PARSER_H */
