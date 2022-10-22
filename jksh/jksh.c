@@ -34,6 +34,7 @@
 
 static char   *homedir;
 static char   *input;
+static FILE   *istream;
 static int     prv_ret;
 static char   *ps1;
 static char  **tokens;
@@ -106,11 +107,24 @@ static void cleanup(void)
 	if (input)   free(input);
 	if (ps1)     free(ps1);
 	if (tokens)  free_tokens(tokens);
+
+	if (istream && (istream != stdin)) fclose(istream);
 }
 
 int main(int argc, char **argv)
 {
 	atexit(cleanup);
+
+	if (argc > 1) {
+		istream = fopen(argv[1], "r");
+		if (!istream) {
+			perror("couldn't open input file");
+			return EXIT_FAILURE;
+		}
+
+		--argc;
+		++argv;
+	} else istream = stdin;
 
 	char *tmp;
 
@@ -147,7 +161,7 @@ int main(int argc, char **argv)
 
 		size_t inputsiz;
 
-		if (errno = 0, getline(&input, &inputsiz, stdin) < 0) {
+		if (errno = 0, getline(&input, &inputsiz, istream) < 0) {
 			// EOF reached
 			if (!errno) break;
 
