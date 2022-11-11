@@ -16,10 +16,44 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 
-int main(void)
+int main(int argc, char **argv)
 {
+	if (argc < 3) {
+		fprintf(stderr, "%s: not enough arguments\n", argv[0]);
+		fprintf(stderr, "usage: %s pattern [FILE]...\n", argv[0]);
+
+		return EXIT_FAILURE;
+	}
+
+	for (int i = 2; i < argc; i++) {
+		int fd;
+
+open_eintr:
+		fd = open(argv[i], O_RDONLY);
+		if (fd < 0) {
+			if (errno == EINTR) goto open_eintr;
+
+			perror(argv[i]);
+			return EXIT_FAILURE;
+		}
+
+close_eintr:
+		if (close(fd) < 0) {
+			if (errno == EINTR) goto close_eintr;
+
+			perror("close()");
+			return EXIT_FAILURE;
+		}
+
+		fd = -1;
+	}
+
 	return EXIT_SUCCESS;
 }
