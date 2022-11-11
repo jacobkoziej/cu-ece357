@@ -82,6 +82,7 @@ open_eintr:
 		}
 
 		pid_t grep_pid;
+		pid_t more_pid;
 
 		switch (grep_pid = fork()) {
 		case -1:
@@ -107,6 +108,27 @@ grep_child_error:
 			return EXIT_FAILURE;
 		}
 
+		switch (more_pid = fork()) {
+		case -1:
+			goto more_child_error;
+
+		case 0:
+			if (dup2(pipefd[MORE_PIPE][0], STDIN_FILENO) < 0)
+				goto more_child_error;
+
+			if (close(fd) < 0) goto more_child_error;
+			for (int i = 0; i < PIPE_CNT; i++)
+				for (int j = 0; j < 2; j++)
+					if (close(pipefd[i][j]) < 0)
+						goto more_child_error;
+
+			execlp("more", "more", NULL);
+
+more_child_error:
+			perror("failed to fork more child");
+			return EXIT_FAILURE;
+		}
+
 		for (int i = 0; i < PIPE_CNT; i++)
 			for (int j = 0; j < 2; j++)
 pipe_close_eintr:
@@ -118,6 +140,7 @@ pipe_close_eintr:
 					return EXIT_FAILURE;
 				}
 
+		wait(NULL);
 		wait(NULL);
 
 close_eintr:
