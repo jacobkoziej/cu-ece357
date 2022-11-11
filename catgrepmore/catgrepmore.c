@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 
@@ -59,6 +60,7 @@ int main(int argc, char **argv)
 
 	for (int i = 2; i < argc; i++) {
 		int fd;
+		int pipefd[PIPE_CNT][2];
 
 open_eintr:
 		fd = open(argv[i], O_RDONLY);
@@ -68,6 +70,55 @@ open_eintr:
 			perror(argv[i]);
 			return EXIT_FAILURE;
 		}
+
+		if (pipe(pipefd[GREP_PIPE]) < 0) {
+			perror("pipe(pipefd[GREP_PIPE]):");
+			return EXIT_FAILURE;
+		}
+
+		if (pipe(pipefd[MORE_PIPE]) < 0) {
+			perror("pipe(pipefd[MORE_PIPE]):");
+			return EXIT_FAILURE;
+		}
+
+		pid_t grep_pid;
+
+		switch (grep_pid = fork()) {
+		case -1:
+			goto grep_child_error;
+
+		case 0:
+			if (dup2(pipefd[GREP_PIPE][0], STDIN_FILENO) < 0)
+				goto grep_child_error;
+
+			if (dup2(pipefd[MORE_PIPE][1], STDOUT_FILENO) < 0)
+				goto grep_child_error;
+
+			if (close(fd) < 0) goto grep_child_error;
+			for (int i = 0; i < PIPE_CNT; i++)
+				for (int j = 0; j < 2; j++)
+					if (close(pipefd[i][j]) < 0)
+						goto grep_child_error;
+
+			execlp("grep", "grep", argv[1], NULL);
+
+grep_child_error:
+			perror("failed to fork grep child");
+			return EXIT_FAILURE;
+		}
+
+		for (int i = 0; i < PIPE_CNT; i++)
+			for (int j = 0; j < 2; j++)
+pipe_close_eintr:
+				if (close(pipefd[i][j]) < 0) {
+					if (errno == EINTR)
+						goto pipe_close_eintr;
+
+					perror("failed to close pipes");
+					return EXIT_FAILURE;
+				}
+
+		wait(NULL);
 
 close_eintr:
 		if (close(fd) < 0) {
