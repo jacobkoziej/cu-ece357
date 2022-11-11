@@ -16,6 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "catgrepmore.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
