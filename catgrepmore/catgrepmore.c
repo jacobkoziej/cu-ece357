@@ -18,9 +18,24 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+
+
+static size_t bytes;
+static size_t files;
+
+
+static void sigusr1_handler(int sig)
+{
+	(void) sig;
+
+	fprintf(stderr, "files: %lu, bytes: %lu\n", files, bytes);
+}
 
 
 int main(int argc, char **argv)
@@ -31,6 +46,14 @@ int main(int argc, char **argv)
 
 		return EXIT_FAILURE;
 	}
+
+	struct sigaction sig;
+	memset(&sig, 0, sizeof(sig));
+
+	sig.sa_handler = sigusr1_handler;
+	sig.sa_flags   = SA_RESTART;
+
+	sigaction(SIGUSR1, &sig, NULL);
 
 	for (int i = 2; i < argc; i++) {
 		int fd;
@@ -52,7 +75,7 @@ close_eintr:
 			return EXIT_FAILURE;
 		}
 
-		fd = -1;
+		++files;
 	}
 
 	return EXIT_SUCCESS;
