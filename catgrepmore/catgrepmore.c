@@ -29,6 +29,8 @@
 #include <unistd.h>
 
 
+static char buf[READSIZ];
+
 static size_t bytes;
 static size_t files;
 
@@ -127,6 +129,50 @@ grep_child_error:
 more_child_error:
 			perror("failed to fork more child");
 			return EXIT_FAILURE;
+		}
+
+		while (1) {
+			ssize_t ret;
+			size_t  readsiz;
+			size_t  writesiz;
+
+			for (readsiz = 0; readsiz < READSIZ; readsiz += ret) {
+read_eintr:
+				ret = read(fd, buf, READSIZ - readsiz);
+				if (ret < 0) {
+					if (errno == EINTR)
+						goto read_eintr;
+
+					perror("failed to read file");
+					return EXIT_FAILURE;
+				}
+
+				if (!ret) break;
+			}
+
+			if (!readsiz) break;  // EOF
+
+			for (
+				writesiz = readsiz;
+				writesiz;
+				writesiz -= ret, bytes += ret
+			) {
+write_eintr:
+				ret = write(
+					pipefd[GREP_PIPE][1],
+					buf,
+					writesiz
+				);
+				if (ret < 0) {
+					if (errno == EINTR)
+						goto write_eintr;
+
+					perror("failed to write to pipe");
+					return EXIT_FAILURE;
+				}
+
+				if (!ret) break;
+			}
 		}
 
 		for (int i = 0; i < PIPE_CNT; i++)

@@ -20,6 +20,9 @@
 #define CATGREPMORE_H
 
 
+#define READSIZ 4096
+
+
 enum pipes_e {
 	GREP_PIPE,
 	MORE_PIPE,
