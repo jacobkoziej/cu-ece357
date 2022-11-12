@@ -20,11 +20,11 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <setjmp.h>
 #include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -34,12 +34,31 @@ static char buf[READSIZ];
 static size_t bytes;
 static size_t files;
 
+static sigjmp_buf       jmp;
+static struct sigaction sig;
+
 
 static void sigusr1_handler(int sig)
 {
 	(void) sig;
 
 	fprintf(stderr, "files: %lu, bytes: %lu\n", files, bytes);
+}
+
+static void next_file_handler(int sig_num)
+{
+	sig.sa_handler = SIG_DFL;
+
+	if (sigaction(SIGUSR2, &sig, NULL) < 0) {
+		perror("failed to reset SIGUSR2 signal");
+		exit(EXIT_FAILURE);
+	}
+	if (sigaction(SIGPIPE, &sig, NULL) < 0) {
+		perror("failed to reset SIGPIPE signal");
+		exit(EXIT_FAILURE);
+	}
+
+	siglongjmp(jmp, sig_num);
 }
 
 
@@ -52,13 +71,13 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	struct sigaction sig;
-	memset(&sig, 0, sizeof(sig));
-
 	sig.sa_handler = sigusr1_handler;
 	sig.sa_flags   = SA_RESTART;
 
-	sigaction(SIGUSR1, &sig, NULL);
+	if (sigaction(SIGUSR1, &sig, NULL) < 0) {
+		perror("failed to setup signal handler for SIGUSR1");
+		return EXIT_FAILURE;
+	}
 
 	for (int i = 2; i < argc; i++) {
 		int fd;
@@ -80,6 +99,37 @@ open_eintr:
 
 		if (pipe(pipefd[MORE_PIPE]) < 0) {
 			perror("pipe(pipefd[MORE_PIPE]):");
+			return EXIT_FAILURE;
+		}
+
+		switch (sigsetjmp(jmp, 1)) {
+		case SIGUSR2:
+			fprintf(
+				stderr,
+				"SIGUSR2 recieved, moving on from file #%lu\n",
+				files
+			);
+			goto sigjmp;
+			break;
+
+		case SIGPIPE:
+			fprintf(
+				stderr,
+				"SIGPIPE recieved, moving on from file #%lu\n",
+				files
+			);
+			goto sigjmp;
+			break;
+		}
+
+		sig.sa_handler = next_file_handler;
+
+		if (sigaction(SIGUSR2, &sig, NULL) < 0) {
+			perror("failed to setup signal handler for SIGUSR1");
+			return EXIT_FAILURE;
+		}
+		if (sigaction(SIGPIPE, &sig, NULL) < 0) {
+			perror("failed to setup signal handler for SIGPIPE");
 			return EXIT_FAILURE;
 		}
 
@@ -175,6 +225,7 @@ write_eintr:
 			}
 		}
 
+sigjmp:
 		for (int i = 0; i < PIPE_CNT; i++)
 			for (int j = 0; j < 2; j++)
 pipe_close_eintr:
@@ -188,6 +239,17 @@ pipe_close_eintr:
 
 		wait(NULL);
 		wait(NULL);
+
+		sig.sa_handler = SIG_DFL;
+
+		if (sigaction(SIGUSR2, &sig, NULL) < 0) {
+			perror("failed to reset SIGUSR2 signal");
+			return EXIT_FAILURE;
+		}
+		if (sigaction(SIGPIPE, &sig, NULL) < 0) {
+			perror("failed to reset SIGPIPE signal");
+			return EXIT_FAILURE;
+		}
 
 close_eintr:
 		if (close(fd) < 0) {
