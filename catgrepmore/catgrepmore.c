@@ -61,6 +61,49 @@ static void next_file_handler(int sig_num)
 	siglongjmp(jmp, sig_num);
 }
 
+static void writer(int rfd, int wfd)
+{
+	while (1) {
+		ssize_t ret;
+		size_t  readsiz;
+		size_t  writesiz;
+
+		for (readsiz = 0; readsiz < READSIZ; readsiz += ret) {
+read_eintr:
+			ret = read(rfd, buf, READSIZ - readsiz);
+			if (ret < 0) {
+				if (errno == EINTR)
+					goto read_eintr;
+
+				perror("failed to read from rfd");
+				exit(EXIT_FAILURE);
+			}
+
+			if (!ret) break;
+		}
+
+		if (!readsiz) break;  // EOF
+
+		for (
+			writesiz = readsiz;
+			writesiz;
+			writesiz -= ret, bytes += ret
+		) {
+write_eintr:
+			ret = write(wfd, buf, writesiz);
+			if (ret < 0) {
+				if (errno == EINTR)
+					goto write_eintr;
+
+				perror("failed to write to wfd");
+				exit(EXIT_FAILURE);
+			}
+
+			if (!ret) break;
+		}
+	}
+}
+
 
 int main(int argc, char **argv)
 {
@@ -181,49 +224,7 @@ more_child_error:
 			return EXIT_FAILURE;
 		}
 
-		while (1) {
-			ssize_t ret;
-			size_t  readsiz;
-			size_t  writesiz;
-
-			for (readsiz = 0; readsiz < READSIZ; readsiz += ret) {
-read_eintr:
-				ret = read(fd, buf, READSIZ - readsiz);
-				if (ret < 0) {
-					if (errno == EINTR)
-						goto read_eintr;
-
-					perror("failed to read file");
-					return EXIT_FAILURE;
-				}
-
-				if (!ret) break;
-			}
-
-			if (!readsiz) break;  // EOF
-
-			for (
-				writesiz = readsiz;
-				writesiz;
-				writesiz -= ret, bytes += ret
-			) {
-write_eintr:
-				ret = write(
-					pipefd[GREP_PIPE][1],
-					buf,
-					writesiz
-				);
-				if (ret < 0) {
-					if (errno == EINTR)
-						goto write_eintr;
-
-					perror("failed to write to pipe");
-					return EXIT_FAILURE;
-				}
-
-				if (!ret) break;
-			}
-		}
+		writer(fd, pipefd[GREP_PIPE][1]);
 
 sigjmp:
 		for (int i = 0; i < PIPE_CNT; i++)
