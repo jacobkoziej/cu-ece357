@@ -70,10 +70,12 @@ void print_context(char *path, char *head, char *tail, char *pos)
 
 int main(int argc, char **argv)
 {
-	static int          fd;
-	static char        *pattern;
-	static size_t       pattern_len;
-	static struct stat  sb;
+	static int           fd;
+	static char         *path;
+	static char         *pattern;
+	static size_t        pattern_len;
+	static void        (*printer)(char*, char*, char*, char*);
+	static struct stat   sb;
 
 	int opt;
 	while ((opt = getopt(argc, argv, "c:p:")) != -1) {
@@ -137,21 +139,30 @@ int main(int argc, char **argv)
 		pattern_len = strlen(pattern);
 	}
 
-	void (*printer)(char*, char*, char*, char*)
-		= (context) ? print_context : print_pos;
+	printer = (context) ? print_context : print_pos;
+
+	// no files specified, read from STDIN
+	if (optind >= argc) {
+		fd   = STDIN_FILENO;
+		path = "/dev/stdin";
+		goto skip_open;
+	}
 
 	for (;;) {
 		// nothing left to parse
 		if (optind >= argc) break;
 
-		fd = open(argv[optind], O_RDONLY);
+		path = argv[optind];
+
+		fd = open(path, O_RDONLY);
 		if (fd < 0) {
-			perror(argv[optind]);
+			perror(path);
 			return -1;
 		}
 
+skip_open:
 		if (fstat(fd, &sb) < 0) {
-			perror(argv[optind]);
+			perror(path);
 			return -1;
 		}
 
@@ -165,26 +176,26 @@ int main(int argc, char **argv)
 		);
 
 		if (file == MAP_FAILED) {
-			perror(argv[optind]);
+			perror(path);
 			return -1;
 		}
 
 		if (close(fd) < 0) {
-			perror(argv[optind]);
+			perror(path);
 			return -1;
 		}
 
 		for (size_t i = 0; i < sb.st_size - pattern_len; i++)
 			if (!memcmp(file + i, pattern, pattern_len))
 				printer(
-					argv[optind],
+					path,
 					file,
 					file + sb.st_size - 1,
 					file + i
 				);
 
 		if (munmap(file, sb.st_size) < 0) {
-			perror(argv[optind]);
+			perror(path);
 			return -1;
 		}
 
