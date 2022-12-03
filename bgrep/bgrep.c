@@ -16,8 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <ctype.h>
 #include <fcntl.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,9 +28,48 @@
 #include <unistd.h>
 
 
+static size_t  context;
+static char   *file;
+
+
+void print_pos(char *path, char *head, char *tail, char *pos)
+{
+	(void) tail;
+
+	printf("%s:%lu\n", path, pos - head);
+}
+
+void print_context(char *path, char *head, char *tail, char *pos)
+{
+	printf("%s:%08X:", path, (unsigned) (pos - head));
+
+	uintptr_t diff;
+
+	// determine if there's enough context to print
+	char *prefix = ((diff = pos - head) >= context)
+		? pos - context
+		: head;
+	char *postfix = ((diff = tail - pos) >= context)
+		? pos + context + 1
+		: tail;
+
+	for (char *i = prefix; i < pos; i++)
+		if (isprint(*i)) printf("  %c", *i);
+		else printf(" %02X", *i & 0xff);
+
+	if (isprint(*pos)) printf("  %c", *pos);
+	else printf(" %02X", *pos & 0xff);
+
+	for (char *i = pos + 1; i < postfix; i++)
+		if (isprint(*i)) printf("  %c", *i);
+		else printf(" %02X", *i & 0xff);
+
+	putchar('\n');
+}
+
+
 int main(int argc, char **argv)
 {
-	static size_t       context;
 	static int          fd;
 	static char        *pattern;
 	static size_t       pattern_len;
@@ -94,6 +135,60 @@ int main(int argc, char **argv)
 
 		pattern     = argv[optind++];
 		pattern_len = strlen(pattern);
+	}
+
+	void (*printer)(char*, char*, char*, char*)
+		= (context) ? print_context : print_pos;
+
+	for (;;) {
+		// nothing left to parse
+		if (optind >= argc) break;
+
+		fd = open(argv[optind], O_RDONLY);
+		if (fd < 0) {
+			perror(argv[optind]);
+			return -1;
+		}
+
+		if (fstat(fd, &sb) < 0) {
+			perror(argv[optind]);
+			return -1;
+		}
+
+		file = mmap(
+			NULL,
+			sb.st_size,
+			PROT_READ,
+			MAP_PRIVATE,
+			fd,
+			0
+		);
+
+		if (file == MAP_FAILED) {
+			perror(argv[optind]);
+			return -1;
+		}
+
+		if (close(fd) < 0) {
+			perror(argv[optind]);
+			return -1;
+		}
+
+		for (size_t i = 0; i < sb.st_size - pattern_len; i++)
+			if (!memcmp(file + i, pattern, pattern_len))
+				printer(
+					argv[optind],
+					file,
+					file + sb.st_size - 1,
+					file + i
+				);
+
+		if (munmap(file, sb.st_size) < 0) {
+			perror(argv[optind]);
+			return -1;
+		}
+
+		++optind;
 	}
 
 	return 0;
