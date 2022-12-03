@@ -39,6 +39,8 @@ static bool     sigbus_occurred;
 
 void sigbus_handler(int sig)
 {
+	// "what is the point of this?"
+	//           - Jeff Hakner 2022
 	(void) sig;
 
 	sigbus_occurred = true;
