@@ -32,7 +32,6 @@
 
 
 static size_t   context;
-static int      fd;
 static char    *file;
 static jmp_buf  jmp;
 static bool     sigbus_occurred;
@@ -43,7 +42,7 @@ void sigbus_handler(int sig)
 	(void) sig;
 
 	sigbus_occurred = true;
-	siglongjmp(jmp, fd);
+	siglongjmp(jmp, 1);
 }
 
 
