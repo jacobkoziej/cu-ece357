@@ -18,6 +18,9 @@
 
 #include <ctype.h>
 #include <fcntl.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -28,8 +31,20 @@
 #include <unistd.h>
 
 
-static size_t  context;
-static char   *file;
+static size_t   context;
+static int      fd;
+static char    *file;
+static jmp_buf  jmp;
+static bool     sigbus_occurred;
+
+
+void sigbus_handler(int sig)
+{
+	(void) sig;
+
+	sigbus_occurred = true;
+	siglongjmp(jmp, fd);
+}
 
 
 void print_pos(char *path, char *head, char *tail, char *pos)
@@ -141,6 +156,15 @@ int main(int argc, char **argv)
 
 	printer = (context) ? print_context : print_pos;
 
+	int ret_val = 1;
+
+	struct sigaction sig;
+	sig.sa_handler = sigbus_handler;
+	if (sigaction(SIGBUS, &sig, NULL) < 0) {
+		perror("failed to setup signal handler for SIGBUS");
+		return -1;
+	}
+
 	// no files specified, read from STDIN
 	if (optind >= argc) {
 		fd   = STDIN_FILENO;
@@ -161,6 +185,9 @@ int main(int argc, char **argv)
 		}
 
 skip_open:
+		// process next file on SIGBUS
+		if (sigsetjmp(jmp, 1)) goto next_file;
+
 		if (fstat(fd, &sb) < 0) {
 			perror(path);
 			return -1;
@@ -186,14 +213,17 @@ skip_open:
 		}
 
 		for (size_t i = 0; i < sb.st_size - pattern_len; i++)
-			if (!memcmp(file + i, pattern, pattern_len))
+			if (!memcmp(file + i, pattern, pattern_len)) {
+				if (ret_val) ret_val = 0;
 				printer(
 					path,
 					file,
 					file + sb.st_size - 1,
 					file + i
 				);
+			}
 
+next_file:
 		if (munmap(file, sb.st_size) < 0) {
 			perror(path);
 			return -1;
@@ -202,5 +232,5 @@ skip_open:
 		++optind;
 	}
 
-	return 0;
+	return (sigbus_occurred) ? -1 : ret_val;
 }
