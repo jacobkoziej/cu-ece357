@@ -73,7 +73,9 @@ int cv_wait(struct cv *cv, struct spinlock *mutex)
 
 	++cv->use;
 
-	cv->pid[cv->tail = (cv->tail + 1) % CV_MAXPROC] = getpid();
+	cv->pid[cv->tail] = getpid();
+
+	cv->tail = (cv->tail + 1) % CV_MAXPROC;
 
 	sigset_t set;
 	sigemptyset(&set);
