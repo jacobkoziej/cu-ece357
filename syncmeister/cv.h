@@ -20,13 +20,13 @@
 #define CV_H
 
 
-#define CV_MAXPROC 64
-
-
 #include <stddef.h>
 #include <sys/types.h>
 
 #include "spinlock.h"
+
+
+#define CV_MAXPROC 64
 
 
 struct cv {
