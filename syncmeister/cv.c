@@ -32,6 +32,12 @@ static void cv_sigusr1_handler(int sig)
 }
 
 
+void cv_broadcast(struct cv *cv)
+{
+	// we can miss an unlikely kill() failure here
+	while (cv_signal(cv) < 0);
+}
+
 void cv_init(struct cv *cv)
 {
 	memset(cv, 0, sizeof(*cv));
