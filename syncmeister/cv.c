@@ -23,12 +23,24 @@
 #include <string.h>
 
 
+static void cv_sigusr1_handler(int sig)
+{
+	(void) sig;
+}
+
+
 void cv_init(struct cv *cv)
 {
 	memset(cv, 0, sizeof(*cv));
 
+	// block SIGUSR1 when we're not expecting it
+	sigset_t set;
+	sigemptyset(&set);
+	sigaddset(&set, SIGUSR1);
+	sigprocmask(SIG_BLOCK, &set, NULL);
+
 	struct sigaction act = {
-		.sa_handler = SIG_IGN,
+		.sa_handler = cv_sigusr1_handler,
 	};
 	sigaction(SIGUSR1, &act, NULL);
 }
