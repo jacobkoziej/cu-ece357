@@ -17,3 +17,16 @@
  */
 
 #include "spinlock.h"
+
+#include <sched.h>
+#include <unistd.h>
+
+#include "tas.h"
+
+
+void spinlock_lock(struct spinlock *lock)
+{
+	while (tas(&lock->lock)) sched_yield();
+
+	lock->pid = getpid();
+}
