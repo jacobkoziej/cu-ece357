@@ -50,14 +50,11 @@ void cv_init(struct cv *cv)
 
 int cv_wait(struct cv *cv, struct spinlock *mutex)
 {
-	size_t new_tail = (cv->tail + 1) % CV_MAXPROC;
+	if (cv->use == CV_MAXPROC) return -1;
 
-	// our wait queue is full
-	if (new_tail == cv->head) return -1;
+	++cv->use;
 
-	cv->tail = new_tail;
-
-	cv->pid[cv->tail] = getpid();
+	cv->pid[cv->tail = (cv->tail + 1) % CV_MAXPROC] = getpid();
 
 	sigset_t set;
 	sigemptyset(&set);
