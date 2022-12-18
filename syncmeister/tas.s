@@ -1,4 +1,5 @@
 .text
+.section .note.GNU-stack, "", %progbits
 
 .global	tas
 .type	tas, @function
