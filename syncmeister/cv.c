@@ -48,6 +48,19 @@ void cv_init(struct cv *cv)
 	sigaction(SIGUSR1, &act, NULL);
 }
 
+int cv_signal(struct cv *cv)
+{
+	if (!cv->use) return -1;
+
+	size_t old_head = cv->head;
+
+	if (kill(cv->pid[old_head], SIGUSR1) < 0) return -1;
+
+	cv->head = (cv->head + 1) % CV_MAXPROC;
+
+	return 0;
+}
+
 int cv_wait(struct cv *cv, struct spinlock *mutex)
 {
 	if (cv->use == CV_MAXPROC) return -1;
