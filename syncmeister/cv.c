@@ -17,3 +17,18 @@
  */
 
 #include "cv.h"
+
+#include <signal.h>
+#include <stddef.h>
+#include <string.h>
+
+
+void cv_init(struct cv *cv)
+{
+	memset(cv, 0, sizeof(*cv));
+
+	struct sigaction act = {
+		.sa_handler = SIG_IGN,
+	};
+	sigaction(SIGUSR1, &act, NULL);
+}
