@@ -29,7 +29,7 @@ all: test_fifo test_spinlock
 
 .PHONY: clean
 clean:
-	@rm -rvf $(BIN) $(DEP) *.o
+	@rm -rvf $(BIN) $(DEP) *.o test_fifo test_spinlock
 
 
 test_fifo: cv.o fifo.o spinlock.o tas.o test_fifo.o
