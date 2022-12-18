@@ -1,5 +1,4 @@
 .text
-.section .note.GNU-stack, "", %progbits
 
 .global	tas
 .type	tas, @function
@@ -11,3 +10,5 @@ tas:
 	movsbq		%al,  %rax
 	pop 		%rbp
 	ret
+
+.section .note.GNU-stack, "", %progbits
