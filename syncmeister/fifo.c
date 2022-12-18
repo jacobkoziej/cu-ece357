@@ -20,8 +20,27 @@
 
 #include <string.h>
 
+#include "cv.h"
+#include "spinlock.h"
+
 
 void fifo_init(struct fifo *fifo)
 {
 	memset(fifo, 0, sizeof(*fifo));
+}
+
+void fifo_wr(struct fifo *fifo, unsigned long val)
+{
+	spinlock_lock(&fifo->mutex);
+
+	if (fifo->use == FIFO_BUFSIZ)
+		cv_wait(&fifo->cv, &fifo->mutex);
+
+	++fifo->use;
+
+	fifo->fifo[fifo->tail] = val;
+
+	fifo->tail = (fifo->tail + 1) % FIFO_BUFSIZ;
+
+	spinlock_unlock(&fifo->mutex);
 }
