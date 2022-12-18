@@ -80,7 +80,8 @@ int cv_wait(struct cv *cv, struct spinlock *mutex)
 	sigaddset(&set, SIGUSR1);
 
 	spinlock_unlock(mutex);
-	if (sigsuspend(&set) < 0) return -1;
+	sigsuspend(&set);
+	spinlock_lock(mutex);
 
 	return 0;
 }
