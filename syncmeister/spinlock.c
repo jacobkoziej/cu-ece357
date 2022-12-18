@@ -17,4 +17,3 @@
  */
 
 #include "spinlock.h"
-#include "spinlock_private.h"

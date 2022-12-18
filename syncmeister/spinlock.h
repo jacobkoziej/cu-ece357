@@ -20,7 +20,13 @@
 #define SPINLOCK_H
 
 
-struct spinlock;
+#include <sys/types.h>
+
+
+struct spinlock {
+	char  lock;
+	pid_t pid;
+};
 
 
 void spinlock_lock(struct spinlock *lock);
