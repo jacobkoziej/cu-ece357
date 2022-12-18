@@ -21,6 +21,9 @@
 #include <signal.h>
 #include <stddef.h>
 #include <string.h>
+#include <unistd.h>
+
+#include "spinlock.h"
 
 
 static void cv_sigusr1_handler(int sig)
@@ -43,4 +46,25 @@ void cv_init(struct cv *cv)
 		.sa_handler = cv_sigusr1_handler,
 	};
 	sigaction(SIGUSR1, &act, NULL);
+}
+
+int cv_wait(struct cv *cv, struct spinlock *mutex)
+{
+	size_t new_tail = (cv->tail + 1) % CV_MAXPROC;
+
+	// our wait queue is full
+	if (new_tail == cv->head) return -1;
+
+	cv->tail = new_tail;
+
+	cv->pid[cv->tail] = getpid();
+
+	sigset_t set;
+	sigemptyset(&set);
+	sigaddset(&set, SIGUSR1);
+
+	spinlock_unlock(mutex);
+	if (sigsuspend(&set) < 0) return -1;
+
+	return 0;
 }
