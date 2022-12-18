@@ -16,10 +16,89 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <sys/mman.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+#include "spinlock.h"
 
 
-int main(void)
+int main(int argc, char **argv)
 {
+	unsigned long children   = 0;
+	unsigned long increments = 0;
+
+	int opt;
+	while ((opt = getopt(argc, argv, "c:i:")) != -1) {
+		switch (opt) {
+			case 'c':
+				children = strtoul(optarg, NULL, 0);
+				break;
+
+			case 'i':
+				increments = strtoul(optarg, NULL, 0);
+				break;
+
+			default:
+				return EXIT_FAILURE;
+		}
+	}
+
+	struct spinlock *lock = mmap(
+		NULL,
+		sizeof(*lock),
+		PROT_READ | PROT_WRITE,
+		MAP_ANONYMOUS | MAP_SHARED,
+		-1,
+		0);
+
+	if (lock == MAP_FAILED) {
+		perror("failed to `mmap()` spinlock");
+		return EXIT_FAILURE;
+	}
+
+	unsigned long *counter = mmap(
+		NULL,
+		sizeof(*counter),
+		PROT_READ | PROT_WRITE,
+		MAP_ANONYMOUS | MAP_SHARED,
+		-1,
+		0);
+
+	if (counter == MAP_FAILED) {
+		perror("failed to `mmap()` counter");
+		return EXIT_FAILURE;
+	}
+
+	pid_t pid;
+	for (unsigned long i = 0; i < children; i++) {
+		pid = fork();
+
+		if (pid < 0) {
+			perror("failed to `fork()` children");
+			return EXIT_FAILURE;
+		}
+
+		if (!pid) break;
+	}
+
+	if (!pid) {
+		while (increments--) {
+			spinlock_lock(lock);
+			++*counter;
+			spinlock_unlock(lock);
+		}
+
+		return EXIT_SUCCESS;
+	}
+
+	for (unsigned long i = 0; i < children; i++) wait(NULL);
+
+	printf("expected: %lu\n", increments * children);
+	printf("got:      %lu\n", *counter);
+
 	return EXIT_SUCCESS;
 }
