@@ -30,3 +30,8 @@ void spinlock_lock(struct spinlock *lock)
 
 	lock->pid = getpid();
 }
+
+void spinlock_unlock(struct spinlock *lock)
+{
+	lock->lock = 0;
+}
