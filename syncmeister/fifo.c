@@ -27,25 +27,24 @@
 void fifo_init(struct fifo *fifo)
 {
 	memset(fifo, 0, sizeof(*fifo));
-	cv_init(&fifo->cv);
+	cv_init(&fifo->full);
+	cv_init(&fifo->empty);
 }
 
 unsigned long fifo_rd(struct fifo *fifo)
 {
 	spinlock_lock(&fifo->mutex);
 
-	if (!fifo->use) {
-		spinlock_unlock(&fifo->mutex);
-		return 0;
-	}
+	while (!fifo->use)
+		cv_wait(&fifo->empty, &fifo->mutex);
 
 	--fifo->use;
 
-	unsigned long val = fifo->fifo[fifo->head];
+	unsigned long val = fifo->fifo[fifo->head++];
 
-	fifo->head = (fifo->head + 1) % FIFO_BUFSIZ;
+	fifo->head %= FIFO_BUFSIZ;
 
-	cv_signal(&fifo->cv);
+	cv_signal(&fifo->full);
 
 	spinlock_unlock(&fifo->mutex);
 
@@ -56,8 +55,8 @@ void fifo_wr(struct fifo *fifo, unsigned long val)
 {
 	spinlock_lock(&fifo->mutex);
 
-	if (fifo->use == FIFO_BUFSIZ)
-		cv_wait(&fifo->cv, &fifo->mutex);
+	while (fifo->use >= FIFO_BUFSIZ)
+		cv_wait(&fifo->full, &fifo->mutex);
 
 	++fifo->use;
 
@@ -65,5 +64,6 @@ void fifo_wr(struct fifo *fifo, unsigned long val)
 
 	fifo->tail = (fifo->tail + 1) % FIFO_BUFSIZ;
 
+	cv_signal(&fifo->empty);
 	spinlock_unlock(&fifo->mutex);
 }
