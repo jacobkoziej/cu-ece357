@@ -71,13 +71,19 @@ int cv_wait(struct cv *cv, struct spinlock *mutex)
 
 	cv->tail = (cv->tail + 1) % CV_MAXPROC;
 
-	sigset_t set;
-	sigemptyset(&set);
-	sigaddset(&set, SIGUSR1);
+	sigset_t mask;
+	sigset_t oldmask;
+
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGUSR1);
+
+	sigprocmask(SIG_BLOCK, &mask, &oldmask);
 
 	spinlock_unlock(mutex);
-	sigsuspend(&set);
+	sigsuspend(&oldmask);
 	spinlock_lock(mutex);
+
+	sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
 	return 0;
 }
