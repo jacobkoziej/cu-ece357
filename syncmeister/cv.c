@@ -42,12 +42,6 @@ void cv_init(struct cv *cv)
 {
 	memset(cv, 0, sizeof(*cv));
 
-	// block SIGUSR1 when we're not expecting it
-	sigset_t set;
-	sigemptyset(&set);
-	sigaddset(&set, SIGUSR1);
-	sigprocmask(SIG_BLOCK, &set, NULL);
-
 	struct sigaction act = {
 		.sa_handler = cv_sigusr1_handler,
 	};
