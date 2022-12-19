@@ -30,13 +30,13 @@
 
 
 struct fifo {
-	size_t head;
-	size_t tail;
-	size_t use;
-	struct cv full;
-	struct cv empty;
+	size_t          head;
+	size_t          tail;
+	size_t          use;
+	struct cv       full;
+	struct cv       empty;
 	struct spinlock mutex;
-	unsigned long fifo[FIFO_BUFSIZ];
+	unsigned long   fifo[FIFO_BUFSIZ];
 };
 
 
