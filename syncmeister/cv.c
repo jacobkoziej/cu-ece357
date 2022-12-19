@@ -50,26 +50,39 @@ void cv_init(struct cv *cv)
 
 int cv_signal(struct cv *cv)
 {
-	if (!cv->use) return -1;
+	spinlock_lock(&cv->lock);
 
-	size_t old_head = cv->head;
+	if (!cv->use) {
+		spinlock_unlock(&cv->lock);
+		return -1;
+	}
 
-	if (kill(cv->pid[old_head], SIGUSR1) < 0) return -1;
+	if (kill(cv->pid[cv->head], SIGUSR1) < 0) {
+		spinlock_unlock(&cv->lock);
+		return -1;
+	}
 
 	cv->head = (cv->head + 1) % CV_MAXPROC;
 
+	spinlock_unlock(&cv->lock);
 	return 0;
 }
 
 int cv_wait(struct cv *cv, struct spinlock *mutex)
 {
-	if (cv->use == CV_MAXPROC) return -1;
+	spinlock_lock(&cv->lock);
+
+	if (cv->use >= CV_MAXPROC) {
+		spinlock_unlock(&cv->lock);
+		return -1;
+	}
 
 	++cv->use;
 
-	cv->pid[cv->tail] = getpid();
+	cv->pid[cv->tail++] = getpid();
+	cv->tail %= CV_MAXPROC;
 
-	cv->tail = (cv->tail + 1) % CV_MAXPROC;
+	spinlock_unlock(&cv->lock);
 
 	sigset_t mask;
 	sigset_t oldmask;

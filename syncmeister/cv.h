@@ -30,10 +30,11 @@
 
 
 struct cv {
-	size_t head;
-	size_t tail;
-	size_t use;
-	pid_t pid[CV_MAXPROC];
+	size_t          head;
+	size_t          tail;
+	size_t          use;
+	struct spinlock lock;
+	pid_t           pid[CV_MAXPROC];
 };
 
 
