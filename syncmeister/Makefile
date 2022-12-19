@@ -21,7 +21,7 @@ CFLAGS += -D_DEFAULT_SOURCE -Wall -Wextra -Wpedantic -g -std=c17
 
 
 .PHONY: all
-all: test_fifo test_spinlock
+all: test_cv test_fifo test_spinlock
 
 
 -include $(DEP)
@@ -29,7 +29,11 @@ all: test_fifo test_spinlock
 
 .PHONY: clean
 clean:
-	@rm -rvf $(BIN) $(DEP) *.o test_fifo test_spinlock
+	@rm -rvf $(BIN) $(DEP) *.o test_cv test_fifo test_spinlock
+
+
+test_cv: cv.o spinlock.o tas.o test_cv.o
+	$(CC) $(CFLAGS) -o $@ $^
 
 
 test_fifo: cv.o fifo.o spinlock.o tas.o test_fifo.o
