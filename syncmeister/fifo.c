@@ -27,6 +27,7 @@
 void fifo_init(struct fifo *fifo)
 {
 	memset(fifo, 0, sizeof(*fifo));
+	cv_init(&fifo->cv);
 }
 
 unsigned long fifo_rd(struct fifo *fifo)
