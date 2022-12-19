@@ -62,6 +62,8 @@ int cv_signal(struct cv *cv)
 		return -1;
 	}
 
+	--cv->use;
+
 	cv->head = (cv->head + 1) % CV_MAXPROC;
 
 	spinlock_unlock(&cv->lock);
